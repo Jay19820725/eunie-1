@@ -23,6 +23,9 @@ const AdminLogin = lazy(() => import('./pages/AdminLogin').then(m => ({ default:
 
 type Page = 'home' | 'test' | 'report' | 'profile' | 'history' | 'admin' | 'admin-login' | 'ocean';
 
+// 每日閉環階段
+export type LoopStage = 'calibration' | 'resonance' | 'reflection' | 'completed';
+
 // Minimalist Sanctuary Loader
 const SanctuaryLoader = () => (
   <div className="fixed inset-0 flex items-center justify-center bg-bg-washi z-50">
@@ -37,10 +40,24 @@ const SanctuaryLoader = () => (
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
+  const [loopStage, setLoopStage] = useState<LoopStage>('calibration');
 
   const { profile } = useAuth();
   const { t } = useLanguage();
   const [pendingReport, setPendingReport] = useState<any>(null);
+
+  // 根據當前頁面更新閉環階段 (簡易邏輯)
+  useEffect(() => {
+    if (currentPage === 'test') {
+      // 正在校準中，不更新階段
+    } else if (currentPage === 'report') {
+      setLoopStage('resonance'); // 校準完成，進入共鳴階段
+    } else if (currentPage === 'ocean') {
+      setLoopStage('reflection'); // 進入共鳴頁面，下一步是沉澱
+    } else if (currentPage === 'history' || currentPage === 'journal' || currentPage === 'manifestations') {
+      setLoopStage('completed'); // 進入沉澱頁面，閉環完成
+    }
+  }, [currentPage]);
 
   // Check for completed reports that haven't been seen
   useEffect(() => {
@@ -65,6 +82,10 @@ function AppContent() {
             // If it's a completed report (has todayTheme) and we haven't seen it
             if (latest.id !== lastSeenId && latest.todayTheme) {
               setPendingReport(latest);
+              // 如果有未讀報告，且目前在首頁，可以將階段設為 resonance 提醒用戶查看
+              if (currentPage === 'home') {
+                setLoopStage('resonance');
+              }
             }
           }
         })
@@ -119,11 +140,11 @@ function AppContent() {
   const renderPage = () => {
     switch (currentPage) {
       case 'home':
-        return <Home onStartTest={() => navigate('test')} />;
+        return <Home onStartTest={() => navigate('test')} onNavigate={navigate} loopStage={loopStage} />;
       case 'test':
         return <EnergyTest onComplete={() => navigate('report')} />;
       case 'report':
-        return <EnergyReport onReset={() => navigate('home')} />;
+        return <EnergyReport onReset={() => navigate('home')} onNavigate={navigate} loopStage={loopStage} />;
       case 'profile':
         return <UserProfile onNavigate={(page) => navigate(page as Page)} />;
       case 'history':
@@ -135,7 +156,7 @@ function AppContent() {
       case 'admin-login':
         return <AdminLogin onSuccess={() => navigate('home')} />;
       default:
-        return <Home onStartTest={() => navigate('test')} />;
+        return <Home onStartTest={() => navigate('test')} onNavigate={navigate} loopStage={loopStage} />;
     }
   };
 
@@ -161,9 +182,10 @@ function AppContent() {
       <Navigation 
         currentPath={currentPage} 
         onNavigate={(path) => navigate(path as Page)} 
+        loopStage={loopStage}
+        onStartTest={() => navigate('test')}
       />
       
-      <SoundControl />
       <ConnectionStatus />
 
       {/* Return Prompt for Completed AI Analysis */}

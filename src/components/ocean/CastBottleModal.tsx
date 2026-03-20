@@ -11,12 +11,13 @@ interface CastBottleModalProps {
   isOpen: boolean;
   onClose: () => void;
   onNavigate?: (page: string) => void;
+  onSuccess?: () => void;
   initialReport?: AnalysisReport | null;
 }
 
 type Step = 'check' | 'select_report' | 'select_card' | 'write';
 
-export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClose, onNavigate, initialReport }) => {
+export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClose, onNavigate, onSuccess, initialReport }) => {
   const { t, language } = useLanguage();
   const { user, isPremium } = useAuth();
   const [step, setStep] = useState<Step>('check');
@@ -135,6 +136,7 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
       }
 
       setSuccess(true);
+      if (onSuccess) onSuccess();
       setTimeout(() => {
         onClose();
         // Reset state

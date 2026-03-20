@@ -20,6 +20,7 @@ export const EnergyJournal: React.FC = () => {
   const [insight, setInsight] = useState('');
   const [intention, setIntention] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showCompletion, setShowCompletion] = useState(false);
 
   const EMOTIONS = useMemo(() => [
     { tag: 'calm' as EmotionTag, label: t('journal_emotion_calm'), icon: <Smile size={18} />, color: 'bg-emerald-100 text-emerald-600' },
@@ -62,6 +63,7 @@ export const EnergyJournal: React.FC = () => {
       setInsight('');
       setIntention('');
       setIsAdding(false);
+      setShowCompletion(true);
       await fetchEntries();
     } catch (error) {
       console.error("Failed to add entry:", error);
@@ -255,6 +257,62 @@ export const EnergyJournal: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Loop Completion Ceremony Modal */}
+      <AnimatePresence>
+        {showCompletion && (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCompletion(false)}
+              className="absolute inset-0 bg-ink/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-[#FDFCF8] p-8 md:p-12 rounded-[3rem] shadow-2xl max-w-md w-full text-center space-y-8"
+            >
+              <div className="w-24 h-24 bg-indigo-50 rounded-full flex items-center justify-center mx-auto text-indigo-500 relative">
+                <motion.div
+                  animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                  transition={{ duration: 4, repeat: Infinity }}
+                >
+                  <Sparkles size={48} />
+                </motion.div>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.3, type: 'spring' }}
+                  className="absolute -top-2 -right-2 w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center border-2 border-white"
+                >
+                  <Plus size={16} />
+                </motion.div>
+              </div>
+              
+              <div className="space-y-4">
+                <h3 className="text-2xl font-serif italic text-ink">
+                  {t('loop_completion_title')}
+                </h3>
+                <p className="text-sm text-ink-muted leading-relaxed">
+                  {t('loop_completion_desc')}
+                </p>
+              </div>
+
+              <div className="pt-4">
+                <Button 
+                  onClick={() => setShowCompletion(false)}
+                  className="w-full h-14 rounded-full bg-ink text-white hover:bg-ink/90 text-xs uppercase tracking-[0.4em] font-light shadow-xl shadow-ink/10"
+                >
+                  {t('loop_completion_btn')}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

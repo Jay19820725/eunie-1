@@ -33,6 +33,7 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
   const [isBlessing, setIsBlessing] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isCastModalOpen, setIsCastModalOpen] = useState(false);
+  const [showResonanceSuccess, setShowResonanceSuccess] = useState(false);
   
   // Ambient Sound State
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -190,6 +191,7 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
       } else {
         // Refresh saved bottles
         fetchSavedBottles();
+        setShowResonanceSuccess(true);
       }
     } catch (err) {
       console.error('Failed to save bottle:', err);
@@ -269,6 +271,7 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
       
       if (res.ok) {
         setPickedBottle(null);
+        setShowResonanceSuccess(true);
         // Show success animation or toast
       }
     } catch (err) {
@@ -654,7 +657,54 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
         isOpen={isCastModalOpen}
         onClose={() => setIsCastModalOpen(false)}
         onNavigate={onNavigate}
+        onSuccess={() => setShowResonanceSuccess(true)}
       />
+
+      <AnimatePresence>
+        {showResonanceSuccess && (
+          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowResonanceSuccess(false)}
+              className="absolute inset-0 bg-ink/60 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative bg-[#FDFCF8] p-8 md:p-12 rounded-[3rem] shadow-2xl max-w-md w-full text-center space-y-8"
+            >
+              <div className="w-20 h-20 bg-water/10 rounded-full flex items-center justify-center mx-auto text-water">
+                <Sparkles size={40} />
+              </div>
+              <div className="space-y-4">
+                <h3 className="text-2xl font-serif italic text-ink">
+                  {t('ocean_resonance_success_title')}
+                </h3>
+                <p className="text-sm text-ink/40 leading-relaxed">
+                  {t('ocean_resonance_success_desc')}
+                </p>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => onNavigate?.('journal')}
+                  className="w-full py-4 bg-ink text-white rounded-full text-xs tracking-[0.2em] font-bold uppercase hover:bg-ink/90 transition-colors"
+                >
+                  {t('ocean_resonance_go_to_reflection')}
+                </button>
+                <button
+                  onClick={() => setShowResonanceSuccess(false)}
+                  className="w-full py-4 bg-ink/5 text-ink/40 rounded-full text-xs tracking-[0.2em] font-bold uppercase hover:bg-ink/10 transition-colors"
+                >
+                  {t('ocean_resonance_continue_explore')}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence>
         {pickedBottle && (

@@ -40,11 +40,11 @@ export const translations = {
     upgrading: "升級中...",
     
     // Navigation
-    nav_home: "首頁",
-    nav_test: "能量探索",
-    nav_history: "成長軌跡",
+    nav_home: "避風港",
+    nav_test: "能量校準",
+    nav_history: "內在沉澱",
     nav_profile: "個人中心",
-    nav_ocean: "共鳴之海",
+    nav_ocean: "靈魂共鳴",
     ocean_cast_btn: "製作瓶中信",
     ocean_cast_title: "製作瓶中信",
     ocean_cast_desc: "將 AI 為妳生成的能量語錄，結合妳的感悟，化作一份溫柔的禮物。",
@@ -65,16 +65,23 @@ export const translations = {
     ocean_cast_limit: "字數限制：{count}/100",
     
     // Home Page
+    home_top_slogan: "EUNIE 嶼妳 — 懂妳的能量，平衡妳的生活",
     home_subtitle: "喚醒心中的光譜",
     home_hero_title: "懂妳的能量，\n平衡妳的生活。",
-    home_hero_desc: "在寧靜裡，\n和更好的自己相遇。",
-    home_start_btn: "探索內在共鳴",
+    home_hero_desc: "在寧靜裡，和更好的自己相遇。",
+    home_start_btn: "開始今日校準",
     home_element_wood: "木",
     home_element_fire: "火",
     home_element_earth: "土",
     home_element_metal: "金",
     home_element_water: "水",
     home_breath: "深呼吸",
+    home_status_title: "今日能量狀態",
+    home_status_calibrated: "今日已完成校準",
+    home_status_pending: "能量尚未校準",
+    home_yesterday_residue: "昨日能量殘留",
+    home_continue_loop: "繼續今日閉環",
+    home_yesterday_none: "尚無紀錄",
 
     // Energy Test Page
     test_step_1: "第一步",
@@ -185,6 +192,15 @@ export const translations = {
     report_share_thumbnail_success: "縮圖已更新",
     report_view_detail: "查看詳細內容",
     
+    // Milestone 3: Report Next Steps
+    report_next_step_title: "接下來的能量旅程",
+    report_next_step_resonance: "尋找共鳴",
+    report_next_step_resonance_desc: "將這份覺察投向大海，看看誰正與妳同頻。",
+    report_next_step_reflection: "內在沉澱",
+    report_next_step_reflection_desc: "在日誌中記下這份感悟，為明天種下意圖。",
+    report_next_step_ocean_btn: "前往靈魂共鳴",
+    report_next_step_journal_btn: "前往內在沉澱",
+    
     // Loading Stages
     report_loading_stage_1: "正在感應您的能量共鳴...",
     report_loading_stage_2: "正在解讀卡牌間的潛在連結...",
@@ -250,6 +266,17 @@ export const translations = {
     ocean_reply_placeholder: "寫下妳的共鳴...",
     ocean_saved_reply_label: "妳的共鳴筆記",
     ocean_save_limit_error: "收藏數量已達上限 (20 封)",
+
+    // Milestone 4: Ocean Resonance
+    ocean_resonance_success_title: "靈魂共鳴已完成",
+    ocean_resonance_success_desc: "妳的能量已在海洋中迴盪。要不要將此刻的感受，記錄在內在沈澱（日誌）中？",
+    ocean_resonance_go_to_reflection: "前往內在沈澱",
+    ocean_resonance_continue_explore: "繼續探索海洋",
+
+    // Milestone 5: Loop Completion
+    loop_completion_title: "今日能量閉環已達成",
+    loop_completion_desc: "校準、共鳴、沈澱。妳在今日完成了與自己、與世界的溫柔連結。帶著這份平靜的能量，祝妳好夢。",
+    loop_completion_btn: "度過了美好的一天",
   },
   ja: {
     // General
@@ -293,10 +320,10 @@ export const translations = {
     
     // Navigation
     nav_home: "ホーム",
-    nav_test: "診断",
-    nav_history: "履歴",
+    nav_test: "エネルギー校正",
+    nav_history: "内なる沈殿",
     nav_profile: "プロフィール",
-    nav_ocean: "共鳴の海",
+    nav_ocean: "魂の共鳴",
     ocean_cast_btn: "瓶中信を作る",
     ocean_cast_title: "瓶中信を作る",
     ocean_cast_desc: "AIが生成したエネルギーの言葉と、あなたの想いを込めて、優しい贈り物を作りましょう。",
@@ -317,16 +344,23 @@ export const translations = {
     ocean_cast_limit: "文字数制限：{count}/100",
 
     // Home Page
-    home_subtitle: "内なる光譜の覚醒",
-    home_hero_title: "光と影が織りなす \nあなただけの物語",
-    home_hero_desc: "静寂の中で、\n本当の自分に会いに行こう。",
-    home_start_btn: "癒やしの旅を始める",
+    home_top_slogan: "EUNIE 嶼妳 — あなたのエネルギーを知り、生活を整える",
+    home_subtitle: "心の中の光を呼び覚ます",
+    home_hero_title: "あなたのエネルギーを知り、\n生活を整える。",
+    home_hero_desc: "静寂の中で、より良い自分に出会う。",
+    home_start_btn: "今日の校正を始める",
     home_element_wood: "木",
     home_element_fire: "火",
     home_element_earth: "土",
     home_element_metal: "金",
     home_element_water: "水",
     home_breath: "深呼吸",
+    home_status_title: "今日のエネルギー状態",
+    home_status_calibrated: "今日の校正は完了しました",
+    home_status_pending: "エネルギーはまだ校正されていません",
+    home_yesterday_residue: "昨日のエネルギー残渣",
+    home_continue_loop: "今日のループを続ける",
+    home_yesterday_none: "記録なし",
 
     // Energy Test Page
     test_step_1: "Step 1",
@@ -437,6 +471,15 @@ export const translations = {
     report_share_thumbnail_success: "サムネイルが更新されました",
     report_view_detail: "詳細を見る",
 
+    // Milestone 3: Report Next Steps
+    report_next_step_title: "次なるエネルギーの旅",
+    report_next_step_resonance: "共鳴を探す",
+    report_next_step_resonance_desc: "この気づきを海に流し、誰があなたと響き合っているか見てみましょう。",
+    report_next_step_reflection: "内なる沈殿",
+    report_next_step_reflection_desc: "この感悟を日誌に記し、明日のための意圖をセットしましょう。",
+    report_next_step_ocean_btn: "魂の共鳴へ",
+    report_next_step_journal_btn: "内なる沈殿へ",
+
     // Loading Stages
     report_loading_stage_1: "あなたのエネルギー共鳴を感じ取っています...",
     report_loading_stage_2: "カード間の潜在的な繋がりを読み解いています...",
@@ -503,6 +546,17 @@ export const translations = {
     ocean_reply_placeholder: "あなたの共鳴を書いてください...",
     ocean_saved_reply_label: "あなたの共鳴ノート",
     ocean_save_limit_error: "コレクションの上限（20通）に達しました",
+
+    // Milestone 4: Ocean Resonance
+    ocean_resonance_success_title: "魂の共鳴が完了しました",
+    ocean_resonance_success_desc: "あなたのエネルギーが海に響き渡りました。今のこの感覚を、内なる沈殿（日誌）に記してみませんか？",
+    ocean_resonance_go_to_reflection: "内なる沈殿へ",
+    ocean_resonance_continue_explore: "海をさらに探索する",
+
+    // Milestone 5: Loop Completion
+    loop_completion_title: "今日のエネルギー閉環が完了しました",
+    loop_completion_desc: "校準、共鳴、そして沈殿。あなたは今日、自分自身と世界との美しい調和を成し遂げました。この穏やかなエネルギーを抱いて、良い夢を。",
+    loop_completion_btn: "素晴らしい一日でした",
   }
 };
 

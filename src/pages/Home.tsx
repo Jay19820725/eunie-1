@@ -1,30 +1,36 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '../components/ui/Button';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight, Activity, Calendar, Zap } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
+import { useAuth } from '../hooks/useAuth';
+import { LoopStage } from '../App';
 
 interface HomeProps {
   onStartTest: () => void;
+  loopStage: LoopStage;
+  onNavigate: (page: string) => void;
 }
 
-const EnergyOrb = ({ color, delay, initialPos }: { color: string; delay: number; initialPos: { x: string; y: string } }) => (
+const EnergyOrb = ({ color, delay, initialPos, size = "100vw" }: { color: string; delay: number; initialPos: { x: string; y: string }; size?: string }) => (
   <motion.div
     initial={{ opacity: 0, scale: 0.8, left: initialPos.x, top: initialPos.y }}
     animate={{ 
-      opacity: [0.2, 0.4, 0.2],
-      scale: [1, 1.1, 1],
-      x: [0, 30, 0],
-      y: [0, -30, 0],
+      opacity: [0.35, 0.6, 0.35],
+      scale: [1, 1.4, 1],
+      x: [0, 80, 0],
+      y: [0, -80, 0],
     }}
     transition={{ 
-      duration: 15 + delay, 
+      duration: 35 + delay, 
       repeat: Infinity, 
       ease: "easeInOut",
       delay: delay 
     }}
-    className="absolute w-[60vw] h-[60vw] md:w-[40vw] md:h-[40vw] rounded-full blur-[60px] md:blur-[120px]"
+    className="absolute rounded-full blur-[120px] md:blur-[200px]"
     style={{ 
+      width: size,
+      height: size,
       backgroundColor: color,
       willChange: 'transform, opacity',
       transform: 'translateZ(0)'
@@ -33,137 +39,199 @@ const EnergyOrb = ({ color, delay, initialPos }: { color: string; delay: number;
 );
 
 const EnergyField = () => (
-  <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-    <EnergyOrb color="var(--color-wood)" delay={0} initialPos={{ x: '10%', y: '20%' }} />
-    <EnergyOrb color="var(--color-fire)" delay={2} initialPos={{ x: '60%', y: '10%' }} />
-    <EnergyOrb color="var(--color-earth)" delay={4} initialPos={{ x: '40%', y: '50%' }} />
-    <EnergyOrb color="var(--color-metal)" delay={1} initialPos={{ x: '70%', y: '70%' }} />
-    <EnergyOrb color="var(--color-water)" delay={3} initialPos={{ x: '15%', y: '65%' }} />
+  <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 bg-[#FDFCF8]">
+    <EnergyOrb color="#B2DFDB" delay={0} initialPos={{ x: '-20%', y: '10%' }} size="120vw" />
+    <EnergyOrb color="#FFF59D" delay={8} initialPos={{ x: '50%', y: '20%' }} size="100vw" />
+    <EnergyOrb color="#F8BBD0" delay={16} initialPos={{ x: '80%', y: '10%' }} size="110vw" />
+    <EnergyOrb color="#C8E6C9" delay={24} initialPos={{ x: '30%', y: '70%' }} size="130vw" />
     
     {/* Washi Texture Overlay */}
-    <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
+    <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]" />
   </div>
 );
 
-const InkBleedText = ({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) => (
+const StatusCard = ({ title, value, icon: Icon, delay = 0 }: { title: string; value: string; icon: any; delay?: number }) => (
   <motion.div
-    initial={{ opacity: 0, filter: 'blur(10px)', letterSpacing: '0.5em' }}
-    animate={{ opacity: 1, filter: 'blur(0px)', letterSpacing: '0.1em' }}
-    transition={{ duration: 2.5, delay, ease: [0.22, 1, 0.36, 1] }}
-    className={className}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 1.5, delay, ease: [0.22, 1, 0.36, 1] }}
+    className="bg-white/30 backdrop-blur-2xl border border-white/50 p-6 md:p-8 rounded-[2.5rem] flex flex-col gap-4 shadow-sm hover:shadow-md transition-all duration-700"
   >
-    {children}
+    <div className="flex items-center justify-between">
+      <span className="text-[9px] tracking-[0.3em] uppercase text-ink/40 font-medium">{title}</span>
+      <div className="p-2 bg-ink/5 rounded-full text-ink/30">
+        <Icon size={14} />
+      </div>
+    </div>
+    <div className="text-xl md:text-2xl font-serif text-ink/80 tracking-wide font-light">{value}</div>
   </motion.div>
 );
 
-export const Home: React.FC<HomeProps> = ({ onStartTest }) => {
-  const { t, language } = useLanguage();
+export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate }) => {
+  const { t } = useLanguage();
+  const { profile } = useAuth();
+  const [lastEnergy, setLastEnergy] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (profile?.uid) {
+      fetch(`/api/reports/${profile.uid}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.reports && data.reports.length > 0) {
+            const latest = data.reports[0];
+            setLastEnergy(latest.dominantElement || null);
+          }
+        })
+        .catch(() => setLastEnergy(null));
+    }
+  }, [profile?.uid]);
+
+  const getStatusText = () => {
+    if (loopStage === 'calibration') return t('home_status_pending');
+    if (loopStage === 'completed') return t('home_status_calibrated');
+    return t('home_continue_loop');
+  };
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-6 py-24">
       <EnergyField />
 
-      <div className="ma-container relative z-10 flex flex-col items-center text-center">
-        {/* Vertical Subtitle */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 2, delay: 1.5 }}
-          className="absolute -right-4 md:-right-12 top-0 vertical-text hidden lg:flex items-center gap-6"
-        >
-          <span className="font-serif text-[10px] tracking-[1em] text-ink/30 uppercase">
-            {t('home_subtitle')}
-          </span>
-          <div className="w-px h-32 bg-ink/10" />
-        </motion.div>
+      {/* Vertical Side Text */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 2, delay: 1 }}
+        className="hidden lg:block fixed right-16 top-1/2 -translate-y-1/2 z-20"
+        style={{ writingMode: 'vertical-rl' }}
+      >
+        <span className="text-[9px] tracking-[0.8em] text-ink/20 uppercase font-light">
+          {t('home_subtitle')}
+        </span>
+      </motion.div>
 
-        {/* Hero Content */}
-        <div className="space-y-12 md:space-y-20">
-          <div className="space-y-6">
-            <motion.span 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 0.4 }}
-              transition={{ delay: 0.5, duration: 2 }}
-              className="text-[10px] md:text-xs tracking-[0.6em] uppercase text-ink-muted block"
+      <div className="ma-container relative z-10 w-full max-w-4xl space-y-24 md:space-y-36">
+        {/* Header Section */}
+        <div className="text-center space-y-12 mb-24 -mt-[50px] md:mt-0 w-[264px] md:w-full mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 2 }}
+            className="text-[10px] tracking-[0.6em] text-ink/30 uppercase font-light"
+          >
+            {t('home_top_slogan')}
+          </motion.div>
+          
+          <div className="space-y-10">
+            <motion.h1 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.8, delay: 0.3 }}
+              className="text-[38px] md:text-6xl font-serif font-extralight text-ink/80 leading-[1.3] tracking-tight"
             >
-              {language === 'zh' ? 'EUNIE 嶼妳 — 懂妳的能量，平衡妳的生活' : 'EUNIE — あなたの魂と共に居なさい'}
-            </motion.span>
-            
-            <InkBleedText className="text-4xl md:text-7xl font-serif font-extralight text-ink leading-tight whitespace-pre-line">
               {t('home_hero_title')}
-            </InkBleedText>
+            </motion.h1>
             
-            <motion.div 
-              initial={{ scaleX: 0 }}
-              animate={{ scaleX: 1 }}
-              transition={{ delay: 1, duration: 1.5, ease: "circOut" }}
-              className="w-24 h-px bg-ink/10 mx-auto"
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 2, delay: 0.8 }}
+              className="h-px w-10 bg-ink/10 mx-auto -mt-5"
+            />
+
+            <motion.p
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1.8, delay: 1.2 }}
+              className="text-xs md:text-base text-ink/40 font-light tracking-[0.3em] -mt-5"
+            >
+              {t('home_hero_desc')}
+            </motion.p>
+          </div>
+        </div>
+
+        {/* Action Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 1.8, delay: 1.5 }}
+          className="flex flex-col items-center gap-16 md:gap-24"
+        >
+          {/* Dashboard Grid - Moved Above Button */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl -mt-10 md:-mt-[80px] p-0 mb-0">
+            <StatusCard 
+              title={t('home_status_title')} 
+              value={getStatusText()} 
+              icon={Activity} 
+              delay={1.5}
+            />
+            <StatusCard 
+              title={t('home_yesterday_residue')} 
+              value={lastEnergy ? t(`home_element_${lastEnergy}`) : t('home_yesterday_none')} 
+              icon={Calendar} 
+              delay={1.7}
             />
           </div>
 
-          <InkBleedText delay={1.2} className="max-w-xl mx-auto">
-            <p className="text-base md:text-xl text-ink/60 font-shippori leading-[2.2] tracking-widest">
-              {t('home_hero_desc')}
-            </p>
-          </InkBleedText>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 2.5, duration: 1.5 }}
-            className="flex flex-col items-center gap-12"
-          >
+          {loopStage === 'calibration' ? (
             <Button 
               onClick={onStartTest}
-              className="group relative overflow-hidden h-16 md:h-20 px-12 md:px-20 text-sm md:text-base tracking-[0.3em]"
+              className="group relative overflow-hidden h-16 md:h-20 px-16 md:px-24 rounded-full text-sm md:text-base tracking-[0.5em] bg-ink text-white hover:bg-ink/90 shadow-2xl shadow-ink/10 transition-all duration-700 md:-mt-[30px]"
             >
-              <span className="relative z-10 flex items-center gap-3">
+              <span className="relative z-10 flex items-center gap-4">
                 {t('home_start_btn')}
-                <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform duration-500" />
+                <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform duration-700" />
               </span>
-              <motion.div 
-                className="absolute inset-0 bg-gradient-to-r from-wood/10 via-fire/10 to-water/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700"
-                animate={{ x: ['-100%', '100%'] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              />
             </Button>
-
-            <div className="flex gap-10 md:gap-20">
-              {[
-                { label: t('home_element_wood'), color: 'bg-wood', shadow: 'shadow-wood/20' },
-                { label: t('home_element_fire'), color: 'bg-fire', shadow: 'shadow-fire/20' },
-                { label: t('home_element_earth'), color: 'bg-earth', shadow: 'shadow-earth/20' },
-                { label: t('home_element_metal'), color: 'bg-metal', shadow: 'shadow-metal/20' },
-                { label: t('home_element_water'), color: 'bg-water', shadow: 'shadow-water/20' }
-              ].map((el, i) => (
-                <motion.div
-                  key={el.label}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 0.4, y: 0 }}
-                  whileHover={{ opacity: 1, y: -2 }}
-                  transition={{ 
-                    opacity: { delay: 3 + (i * 0.15), duration: 2 },
-                    y: { delay: 3 + (i * 0.15), duration: 2 },
-                    default: { duration: 0.5, ease: "easeOut" }
-                  }}
-                  className="flex flex-col items-center gap-4 group cursor-default"
-                >
-                  <div className={`w-1.5 h-1.5 rounded-full ${el.color} ${el.shadow} shadow-[0_0_8px_currentColor] transition-all duration-500 group-hover:scale-125`} />
-                  <span className="text-[10px] tracking-[0.4em] text-ink/40 font-serif transition-colors duration-500 group-hover:text-ink/80">{el.label}</span>
-                </motion.div>
-              ))}
+          ) : (
+            <div className="flex flex-wrap justify-center gap-8 md:-mt-[30px]">
+              <Button 
+                onClick={() => onNavigate(loopStage === 'resonance' ? 'ocean' : 'history')}
+                className="h-14 px-10 rounded-full text-[10px] tracking-[0.4em] bg-ink text-white hover:bg-ink/90 shadow-xl shadow-ink/10"
+              >
+                {t('home_continue_loop')}
+              </Button>
+              <Button 
+                onClick={onStartTest}
+                variant="outline"
+                className="h-14 px-10 rounded-full text-[10px] tracking-[0.4em] border-ink/10 text-ink/30 hover:text-ink hover:border-ink/20"
+              >
+                {t('report_new_test')}
+              </Button>
             </div>
-          </motion.div>
-        </div>
+          )}
+
+          {/* Five Elements Visualizer */}
+          <div className="flex gap-10 md:gap-16 pt-8">
+            {[
+              { id: 'wood', color: 'bg-wood' },
+              { id: 'fire', color: 'bg-fire' },
+              { id: 'earth', color: 'bg-earth' },
+              { id: 'metal', color: 'bg-metal' },
+              { id: 'water', color: 'bg-water' }
+            ].map((el, i) => (
+              <motion.div
+                key={el.id}
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: lastEnergy === el.id ? 1 : 0.1, scale: lastEnergy === el.id ? 1.2 : 1 }}
+                whileHover={{ opacity: 0.5, scale: 1.1 }}
+                transition={{ delay: 2.2 + (i * 0.1) }}
+                className="flex flex-col items-center gap-6 group cursor-default"
+              >
+                <div className={`w-1 h-1 rounded-full ${el.color} shadow-[0_0_10px_currentColor] transition-all duration-700`} />
+                <span className="text-[7px] tracking-[0.4em] text-ink/20 uppercase font-serif group-hover:text-ink/40 transition-colors duration-500">{t(`home_element_${el.id}`)}</span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       </div>
 
       {/* Background Breathing Hint */}
       <motion.div
-        animate={{ opacity: [0.1, 0.3, 0.1] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        className="fixed bottom-12 left-1/2 -translate-x-1/2 text-[9px] tracking-[0.5em] text-ink/20 uppercase pointer-events-none"
+        animate={{ opacity: [0.03, 0.1, 0.03] }}
+        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
+        className="fixed bottom-12 left-1/2 -translate-x-1/2 text-[7px] tracking-[1em] text-ink/10 uppercase pointer-events-none font-light"
       >
-        Deep Breath • {t('home_breath')}
+        {t('home_breath')}
       </motion.div>
     </div>
   );

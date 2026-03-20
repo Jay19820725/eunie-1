@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useTest } from '../store/TestContext';
 import { Button } from '../components/ui/Button';
 import { useLanguage } from '../i18n/LanguageContext';
-import { Share2, RefreshCw, ArrowLeft, Sparkles } from 'lucide-react';
+import { Share2, RefreshCw, ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
 import { useEnergyReport } from '../hooks/useEnergyReport';
 import { WeavingGuidanceDialog } from '../components/report/WeavingGuidanceDialog';
 import { EnergyProfile } from '../components/report/EnergyProfile';
@@ -29,7 +29,11 @@ const WeavingLoader: React.FC<{ label?: string }> = ({ label }) => {
   );
 };
 
-export const EnergyReport: React.FC<{ onReset: () => void }> = ({ onReset }) => {
+export const EnergyReport: React.FC<{ 
+  onReset: () => void;
+  onNavigate: (page: string) => void;
+  loopStage: string;
+}> = ({ onReset, onNavigate, loopStage }) => {
   const { selectedCards } = useTest();
   const { t } = useLanguage();
   const reportRef = useRef<HTMLDivElement>(null);
@@ -189,6 +193,73 @@ export const EnergyReport: React.FC<{ onReset: () => void }> = ({ onReset }) => 
           )}
           <div className="w-px h-16 bg-ink/10 mx-auto" />
         </motion.div>
+      </section>
+
+      {/* Next Step Guidance: Milestone 3 Behavioral Loop */}
+      <section className="mb-32 py-24 border-t border-ink/5">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center space-y-12"
+          >
+            <div className="space-y-4">
+              <span className="text-[10px] uppercase tracking-[0.8em] text-ink-muted">Next Step</span>
+              <h2 className="text-3xl font-serif italic font-light tracking-tight">{t('report_next_step_title')}</h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* Resonance Step */}
+              <motion.div 
+                whileHover={{ y: -5 }}
+                className={`p-10 rounded-[2.5rem] border transition-all cursor-pointer text-left flex flex-col justify-between h-full ${
+                  loopStage === 'resonance' ? 'bg-fire/5 border-fire/20 shadow-xl shadow-fire/5' : 'bg-white border-ink/5 opacity-60'
+                }`}
+                onClick={() => onNavigate('ocean')}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${loopStage === 'resonance' ? 'bg-fire text-white' : 'bg-ink/10 text-ink'}`}>
+                      <Sparkles size={14} />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-[0.4em] font-medium">{t('report_next_step_resonance')}</span>
+                  </div>
+                  <p className="text-sm text-ink-muted leading-relaxed">
+                    {t('report_next_step_resonance_desc')}
+                  </p>
+                </div>
+                <div className="mt-8 flex items-center gap-2 text-[10px] uppercase tracking-[0.4em] font-semibold text-fire">
+                  {t('report_next_step_ocean_btn')} <ArrowRight size={12} />
+                </div>
+              </motion.div>
+
+              {/* Reflection Step */}
+              <motion.div 
+                whileHover={{ y: -5 }}
+                className={`p-10 rounded-[2.5rem] border transition-all cursor-pointer text-left flex flex-col justify-between h-full ${
+                  loopStage === 'reflection' ? 'bg-earth/5 border-earth/20 shadow-xl shadow-earth/5' : 'bg-white border-ink/5 opacity-60'
+                }`}
+                onClick={() => onNavigate('history')}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center ${loopStage === 'reflection' ? 'bg-earth text-white' : 'bg-ink/10 text-ink'}`}>
+                      <RefreshCw size={14} />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-[0.4em] font-medium">{t('report_next_step_reflection')}</span>
+                  </div>
+                  <p className="text-sm text-ink-muted leading-relaxed">
+                    {t('report_next_step_reflection_desc')}
+                  </p>
+                </div>
+                <div className="mt-8 flex items-center gap-2 text-[10px] uppercase tracking-[0.4em] font-semibold text-earth">
+                  {t('report_next_step_journal_btn')} <ArrowRight size={12} />
+                </div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
       </section>
 
       {/* Share & CTA: Editorial Footer */}
