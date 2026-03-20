@@ -228,12 +228,12 @@ async function startServer() {
     }
   });
 
-  app.post(["/api/users/:uid", "/api/users/:uid/"], async (req, res) => {
+  app.patch(["/api/users/:uid", "/api/users/:uid/"], async (req, res) => {
     const { uid } = req.params;
     const updates = req.body;
     const fields = Object.keys(updates);
     
-    console.log(`POST /api/users/${uid} - Updates:`, updates);
+    console.log(`PATCH /api/users/${uid} - Updates:`, updates);
     
     if (fields.length === 0) return res.status(400).json({ error: "No fields to update" });
 

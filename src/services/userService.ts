@@ -76,7 +76,7 @@ export const userService = {
    */
   async updateRole(uid: string, role: UserRole): Promise<UserProfile> {
     const response = await fetch(`/api/users/${uid}`, {
-      method: 'POST',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -111,19 +111,28 @@ export const userService = {
    */
   async updateProfile(uid: string, updates: Partial<UserProfile>): Promise<UserProfile> {
     const response = await fetch(`/api/users/${uid}`, {
-      method: 'POST',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(updates),
     });
 
+    const contentType = response.headers.get("content-type");
+    let data: any;
+
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      console.error("Server returned non-JSON response:", text);
+      throw new Error(`伺服器錯誤 (${response.status}): 傳回了非 JSON 格式的回應。`);
+    }
+
     if (!response.ok) {
-      const data = await response.json();
       throw new Error(data.error || 'Failed to update profile');
     }
 
-    const data = await response.json();
     return {
       ...data,
       displayName: data.display_name,
@@ -137,19 +146,28 @@ export const userService = {
    */
   async updateSettings(uid: string, settings: UserProfile['settings']): Promise<UserProfile> {
     const response = await fetch(`/api/users/${uid}`, {
-      method: 'POST',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ settings }),
     });
 
+    const contentType = response.headers.get("content-type");
+    let data: any;
+
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      console.error("Server returned non-JSON response:", text);
+      throw new Error(`伺服器錯誤 (${response.status}): 傳回了非 JSON 格式的回應。`);
+    }
+
     if (!response.ok) {
-      const data = await response.json();
       throw new Error(data.error || 'Failed to update settings');
     }
 
-    const data = await response.json();
     return {
       ...data,
       displayName: data.display_name,
@@ -163,7 +181,7 @@ export const userService = {
    */
   async updateSubscription(uid: string, status: 'active' | 'inactive' | 'none'): Promise<void> {
     const response = await fetch(`/api/users/${uid}`, {
-      method: 'POST',
+      method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
       },
