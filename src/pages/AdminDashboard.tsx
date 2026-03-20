@@ -243,6 +243,14 @@ export const AdminDashboard: React.FC = () => {
 
   const handleSaveMusic = async () => {
     if (!editingMusic) return;
+    if (!editingMusic.url) {
+      alert('請輸入音檔 URL');
+      return;
+    }
+    if (!editingMusic.name || !editingMusic.title) {
+      alert('請輸入音樂名稱與標題');
+      return;
+    }
     try {
       await saveMusicMutation.mutateAsync(editingMusic);
       setEditingMusic(null);
@@ -357,7 +365,7 @@ export const AdminDashboard: React.FC = () => {
 
         <GlassCard className="p-8 h-[400px]">
           <h3 className="text-xs uppercase tracking-[0.3em] text-ink-muted mb-8">今日營運概況</h3>
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
             <ReBarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
               <XAxis 
@@ -1061,7 +1069,7 @@ export const AdminDashboard: React.FC = () => {
           {/* 7 Day Trend */}
           <GlassCard className="p-8 h-[400px]">
             <h3 className="text-xs uppercase tracking-[0.3em] text-ink-muted mb-8">7 日趨勢分析</h3>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <LineChart data={analytics.trends.sevenDays}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
@@ -1079,7 +1087,7 @@ export const AdminDashboard: React.FC = () => {
           {/* 30 Day Trend */}
           <GlassCard className="p-8 h-[400px]">
             <h3 className="text-xs uppercase tracking-[0.3em] text-ink-muted mb-8">30 日趨勢分析</h3>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <LineChart data={analytics.trends.thirtyDays}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 8 }} />
@@ -1098,7 +1106,7 @@ export const AdminDashboard: React.FC = () => {
           {/* Usage Funnel */}
           <GlassCard className="p-8 h-[450px]">
             <h3 className="text-xs uppercase tracking-[0.3em] text-ink-muted mb-8">用戶轉化漏斗</h3>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <FunnelChart>
                 <Tooltip />
                 <Funnel
@@ -1115,7 +1123,7 @@ export const AdminDashboard: React.FC = () => {
           {/* Emotion Distribution */}
           <GlassCard className="p-8 h-[450px]">
             <h3 className="text-xs uppercase tracking-[0.3em] text-ink-muted mb-8">情緒能量分佈</h3>
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <PieChart>
                 <Pie
                   data={analytics.emotionDistribution}

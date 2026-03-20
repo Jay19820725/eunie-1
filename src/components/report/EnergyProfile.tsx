@@ -69,8 +69,8 @@ export const EnergyProfile: React.FC<EnergyProfileProps> = ({ report }) => {
             })}
           </div>
           
-          <div className="w-full h-full z-10 relative">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="w-full h-full z-10 relative min-h-[300px] md:min-h-[400px]">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
                 <PolarGrid stroke="#1A1A1A" strokeOpacity={0.08} />
                 <PolarAngleAxis 
