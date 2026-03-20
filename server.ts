@@ -1305,21 +1305,30 @@ async function startServer() {
   app.post("/api/admin/music", async (req, res) => {
     const { id, name, title, artist, category, element, url, is_active, sort_order } = req.body;
     try {
+      // Ensure sort_order is a number
+      const finalSortOrder = parseInt(sort_order as any) || 0;
+      const finalIsActive = is_active === undefined ? true : is_active;
+
       if (id) {
         await pool.query(
           "UPDATE music_tracks SET name = $1, title = $2, artist = $3, category = $4, element = $5, url = $6, is_active = $7, sort_order = $8 WHERE id = $9",
-          [name, title, artist, category, element, url, is_active, sort_order, id]
+          [name, title, artist, category, element, url, finalIsActive, finalSortOrder, id]
         );
       } else {
         await pool.query(
           "INSERT INTO music_tracks (name, title, artist, category, element, url, is_active, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-          [name, title, artist, category, element, url, is_active, sort_order]
+          [name, title, artist, category, element, url, finalIsActive, finalSortOrder]
         );
       }
       res.json({ success: true });
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error saving music track:", err);
-      res.status(500).json({ error: "Internal server error" });
+      // Provide more specific error message for unique constraint violation
+      if (err.code === '23505') {
+        res.status(400).json({ error: "音樂 URL 已存在，請使用不同的 URL" });
+      } else {
+        res.status(500).json({ error: err.message || "Internal server error" });
+      }
     }
   });
 

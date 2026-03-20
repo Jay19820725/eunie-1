@@ -16,10 +16,14 @@ const ElementIcon = ({ element, size = 14 }: { element: string, size?: number })
 
 export const SoundControl: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isPlaying, currentSound, togglePlay, setSound, playbackMode, setPlaybackMode, nextTrack, tracks } = useSoundscape();
+  const { isPlaying, currentSound, togglePlay, setSound, playbackMode, setPlaybackMode, nextTrack, tracks, isLoading } = useSoundscape();
+
+  // If loading and no tracks, we might want to hide or show a loader
+  // But for now, let's just ensure it's visible if tracks exist or once loaded
+  if (isLoading && tracks.length === 0) return null;
 
   return (
-    <div className="fixed bottom-28 right-6 md:right-12 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-32 right-6 md:right-12 z-[100] flex flex-col items-end gap-3">
       <AnimatePresence>
         {isOpen && (
           <motion.div

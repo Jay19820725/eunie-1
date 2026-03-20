@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 
 interface Soundscape {
   id: string;
@@ -23,6 +24,7 @@ interface SoundscapeContextType {
   setVolume: (volume: number) => void;
   setPlaybackMode: (mode: PlaybackMode) => void;
   nextTrack: () => void;
+  isLoading: boolean;
 }
 
 const SoundscapeContext = createContext<SoundscapeContextType | undefined>(undefined);
@@ -32,49 +34,45 @@ export const SoundscapeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [currentSound, setCurrentSound] = useState<Soundscape | null>(null);
   const [volume, setVolume] = useState(0.5);
   const [playbackMode, setPlaybackMode] = useState<PlaybackMode>('list');
-  const [tracks, setTracks] = useState<Soundscape[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  useEffect(() => {
-    // Fetch tracks from API
-    const fetchTracks = async () => {
-      try {
-        const response = await fetch('/api/music');
-        if (response.ok) {
-          const data = await response.json();
-          setTracks(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch music tracks:", err);
-      }
-    };
-    fetchTracks();
-  }, []);
+  // Use React Query to fetch tracks
+  const { data: tracks = [], isLoading } = useQuery({
+    queryKey: ['music'],
+    queryFn: async () => {
+      const response = await fetch('/api/music');
+      if (!response.ok) throw new Error('Failed to fetch music');
+      return await response.json();
+    }
+  });
 
   useEffect(() => {
-    audioRef.current = new Audio();
+    const audio = new Audio();
+    audioRef.current = audio;
     
     const handleEnded = () => {
-      if (playbackMode === 'single') {
-        if (audioRef.current) {
-          audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(err => console.error("Audio play failed:", err));
-        }
+      if (playbackModeRef.current === 'single') {
+        audio.currentTime = 0;
+        audio.play().catch(err => console.error("Audio play failed:", err));
       } else {
         nextTrack();
       }
     };
 
-    audioRef.current.addEventListener('ended', handleEnded);
+    audio.addEventListener('ended', handleEnded);
     
     return () => {
-      if (audioRef.current) {
-        audioRef.current.removeEventListener('ended', handleEnded);
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
+      audio.removeEventListener('ended', handleEnded);
+      audio.pause();
+      audioRef.current = null;
     };
-  }, [playbackMode, tracks, currentSound]);
+  }, []);
+
+  // Use a ref for playbackMode to avoid re-running the effect above
+  const playbackModeRef = useRef(playbackMode);
+  useEffect(() => {
+    playbackModeRef.current = playbackMode;
+  }, [playbackMode]);
 
   useEffect(() => {
     if (audioRef.current) {
@@ -86,15 +84,27 @@ export const SoundscapeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!audioRef.current) return;
 
     if (currentSound) {
-      const wasPlaying = isPlaying;
       audioRef.current.src = currentSound.url;
-      if (wasPlaying) {
+      if (isPlaying) {
         audioRef.current.play().catch(err => console.error("Audio play failed:", err));
       }
     } else {
       audioRef.current.pause();
     }
   }, [currentSound]);
+
+  useEffect(() => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      if (audioRef.current.src) {
+        audioRef.current.play().catch(err => console.error("Audio play failed:", err));
+      } else if (tracks.length > 0) {
+        setCurrentSound(tracks[0]);
+      }
+    } else {
+      audioRef.current.pause();
+    }
+  }, [isPlaying]);
 
   const nextTrack = () => {
     if (tracks.length === 0) return;
@@ -106,25 +116,17 @@ export const SoundscapeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   };
 
   const togglePlay = () => {
-    if (!audioRef.current) return;
-
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      if (!currentSound && tracks.length > 0) {
-        setCurrentSound(tracks[0]);
-      }
-      audioRef.current.play().catch(err => console.error("Audio play failed:", err));
-      setIsPlaying(true);
+    if (!currentSound && tracks.length > 0) {
+      setCurrentSound(tracks[0]);
     }
+    setIsPlaying(!isPlaying);
   };
 
   const setSound = (id: string) => {
     const sound = tracks.find(s => s.id === id);
     if (sound) {
       setCurrentSound(sound);
-      if (!isPlaying) setIsPlaying(true);
+      setIsPlaying(true);
     }
   };
 
@@ -139,7 +141,8 @@ export const SoundscapeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       setSound, 
       setVolume, 
       setPlaybackMode,
-      nextTrack
+      nextTrack,
+      isLoading
     }}>
       {children}
     </SoundscapeContext.Provider>

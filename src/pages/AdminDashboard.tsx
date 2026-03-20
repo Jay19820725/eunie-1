@@ -246,9 +246,9 @@ export const AdminDashboard: React.FC = () => {
     try {
       await saveMusicMutation.mutateAsync(editingMusic);
       setEditingMusic(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error("儲存音樂失敗:", error);
-      alert('儲存失敗');
+      alert('儲存失敗: ' + (error.message || '未知錯誤'));
     }
   };
 
@@ -963,7 +963,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">模組名稱 (Unique ID)</label>
                     <input 
                       type="text" 
-                      value={editingPrompt.module_name}
+                      value={editingPrompt.module_name || ''}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, module_name: e.target.value })}
                       className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="例如：persona_core"
@@ -972,7 +972,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">分類</label>
                     <select 
-                      value={editingPrompt.category}
+                      value={editingPrompt.category || 'core'}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, category: e.target.value as any })}
                       className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                     >
@@ -985,7 +985,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">版本號</label>
                     <input 
                       type="text" 
-                      value={editingPrompt.version}
+                      value={editingPrompt.version || ''}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, version: e.target.value })}
                       className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="v1.0.0"
@@ -997,7 +997,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">中文內容 (ZH-TW)</label>
                     <textarea 
-                      value={editingPrompt.content_zh}
+                      value={editingPrompt.content_zh || ''}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, content_zh: e.target.value })}
                       className="w-full h-96 px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm font-mono focus:outline-none focus:border-wood/30 resize-none leading-relaxed"
                       placeholder="請輸入中文提示詞內容..."
@@ -1006,7 +1006,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">日文內容 (JA-JP)</label>
                     <textarea 
-                      value={editingPrompt.content_ja}
+                      value={editingPrompt.content_ja || ''}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, content_ja: e.target.value })}
                       className="w-full h-96 px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm font-mono focus:outline-none focus:border-wood/30 resize-none leading-relaxed"
                       placeholder="請輸入日文提示詞內容..."
@@ -1018,7 +1018,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">狀態</label>
                     <select 
-                      value={editingPrompt.status}
+                      value={editingPrompt.status || 'draft'}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, status: e.target.value as any })}
                       className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                     >
@@ -1290,7 +1290,7 @@ export const AdminDashboard: React.FC = () => {
                       <label className="block text-[10px] uppercase tracking-widest text-ink-muted mb-2">中文名稱</label>
                       <input 
                         type="text" 
-                        value={editingBottleTag.name_zh}
+                        value={editingBottleTag.name_zh || ''}
                         onChange={(e) => setEditingBottleTag({ ...editingBottleTag, name_zh: e.target.value })}
                         className="w-full bg-ink/5 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-wood/20"
                       />
@@ -1299,7 +1299,7 @@ export const AdminDashboard: React.FC = () => {
                       <label className="block text-[10px] uppercase tracking-widest text-ink-muted mb-2">日文名稱</label>
                       <input 
                         type="text" 
-                        value={editingBottleTag.name_ja}
+                        value={editingBottleTag.name_ja || ''}
                         onChange={(e) => setEditingBottleTag({ ...editingBottleTag, name_ja: e.target.value })}
                         className="w-full bg-ink/5 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-wood/20"
                       />
@@ -1309,13 +1309,13 @@ export const AdminDashboard: React.FC = () => {
                       <div className="flex gap-3">
                         <input 
                           type="color" 
-                          value={editingBottleTag.color}
+                          value={editingBottleTag.color || '#000000'}
                           onChange={(e) => setEditingBottleTag({ ...editingBottleTag, color: e.target.value })}
                           className="w-12 h-12 rounded-lg cursor-pointer"
                         />
                         <input 
                           type="text" 
-                          value={editingBottleTag.color}
+                          value={editingBottleTag.color || ''}
                           onChange={(e) => setEditingBottleTag({ ...editingBottleTag, color: e.target.value })}
                           className="flex-1 bg-ink/5 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-wood/20"
                         />
@@ -1366,7 +1366,7 @@ export const AdminDashboard: React.FC = () => {
                       <label className="block text-[10px] uppercase tracking-widest text-ink-muted mb-2">詞彙</label>
                       <input 
                         type="text" 
-                        value={editingSensitiveWord.word}
+                        value={editingSensitiveWord.word || ''}
                         onChange={(e) => setEditingSensitiveWord({ ...editingSensitiveWord, word: e.target.value })}
                         className="w-full bg-ink/5 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-fire/20"
                         placeholder="輸入敏感詞..."
@@ -2109,7 +2109,7 @@ export const AdminDashboard: React.FC = () => {
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">語系 (Locale)</label>
                         <select 
-                          value={editingCard.data.locale}
+                          value={editingCard.data.locale || 'zh-TW'}
                           onChange={(e) => setEditingCard({ ...editingCard, data: { ...editingCard.data, locale: e.target.value } })}
                           className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30 focus:bg-white transition-all shadow-sm"
                         >
@@ -2121,7 +2121,7 @@ export const AdminDashboard: React.FC = () => {
                         <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">英文名稱 (Internal)</label>
                         <input 
                           type="text" 
-                          value={editingCard.data.name_en}
+                          value={editingCard.data.name_en || ''}
                           onChange={(e) => setEditingCard({ ...editingCard, data: { ...editingCard.data, name_en: e.target.value } })}
                           className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30 focus:bg-white transition-all shadow-sm"
                           placeholder="card_name_en"
@@ -2135,7 +2135,7 @@ export const AdminDashboard: React.FC = () => {
                           <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">關鍵字文本</label>
                           <input 
                             type="text" 
-                            value={editingCard.data.text}
+                            value={editingCard.data.text || ''}
                             onChange={(e) => setEditingCard({ ...editingCard, data: { ...editingCard.data, text: e.target.value } })}
                             className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30 focus:bg-white transition-all shadow-sm"
                             placeholder="輸入關鍵字..."
@@ -2146,7 +2146,7 @@ export const AdminDashboard: React.FC = () => {
                           <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">卡片名稱</label>
                           <input 
                             type="text" 
-                            value={editingCard.data.name}
+                            value={editingCard.data.name || ''}
                             onChange={(e) => setEditingCard({ ...editingCard, data: { ...editingCard.data, name: e.target.value } })}
                             className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30 focus:bg-white transition-all shadow-sm"
                             placeholder="輸入卡片名稱..."
@@ -2157,7 +2157,7 @@ export const AdminDashboard: React.FC = () => {
                         <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">圖片 URL</label>
                         <input 
                           type="text" 
-                          value={editingCard.data.imageUrl}
+                          value={editingCard.data.imageUrl || ''}
                           onChange={(e) => setEditingCard({ ...editingCard, data: { ...editingCard.data, imageUrl: e.target.value } })}
                           className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30 focus:bg-white transition-all shadow-sm"
                           placeholder="https://..."
@@ -2273,7 +2273,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">音樂名稱 (內部用)</label>
                     <input 
                       type="text" 
-                      value={editingMusic.name}
+                      value={editingMusic.name || ''}
                       onChange={(e) => setEditingMusic({ ...editingMusic, name: e.target.value })}
                       className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="例如：Little Forest Spirit"
@@ -2283,7 +2283,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">顯示標題</label>
                     <input 
                       type="text" 
-                      value={editingMusic.title}
+                      value={editingMusic.title || ''}
                       onChange={(e) => setEditingMusic({ ...editingMusic, title: e.target.value })}
                       className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="例如：森林冥想"
@@ -2296,7 +2296,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">藝術家 / 來源</label>
                     <input 
                       type="text" 
-                      value={editingMusic.artist}
+                      value={editingMusic.artist || ''}
                       onChange={(e) => setEditingMusic({ ...editingMusic, artist: e.target.value })}
                       className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="例如：Nature Sounds"
@@ -2306,7 +2306,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">分類</label>
                     <input 
                       type="text" 
-                      value={editingMusic.category}
+                      value={editingMusic.category || ''}
                       onChange={(e) => setEditingMusic({ ...editingMusic, category: e.target.value })}
                       className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="例如：meditation"
@@ -2318,7 +2318,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">五行屬性</label>
                     <select 
-                      value={editingMusic.element}
+                      value={editingMusic.element || 'wood'}
                       onChange={(e) => setEditingMusic({ ...editingMusic, element: e.target.value })}
                       className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                     >
@@ -2333,8 +2333,8 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">排序</label>
                     <input 
                       type="number" 
-                      value={editingMusic.sort_order}
-                      onChange={(e) => setEditingMusic({ ...editingMusic, sort_order: parseInt(e.target.value) })}
+                      value={editingMusic.sort_order ?? 0}
+                      onChange={(e) => setEditingMusic({ ...editingMusic, sort_order: parseInt(e.target.value) || 0 })}
                       className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                     />
                   </div>
@@ -2344,7 +2344,7 @@ export const AdminDashboard: React.FC = () => {
                   <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">音檔 URL</label>
                   <input 
                     type="text" 
-                    value={editingMusic.url}
+                    value={editingMusic.url || ''}
                     onChange={(e) => setEditingMusic({ ...editingMusic, url: e.target.value })}
                     className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                     placeholder="https://..."
@@ -2407,7 +2407,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">模組名稱 (Unique ID)</label>
                     <input 
                       type="text" 
-                      value={editingPrompt.module_name}
+                      value={editingPrompt.module_name || ''}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, module_name: e.target.value })}
                       className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="例如：persona_core"
@@ -2416,7 +2416,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">分類</label>
                     <select 
-                      value={editingPrompt.category}
+                      value={editingPrompt.category || 'core'}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, category: e.target.value as any })}
                       className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                     >
@@ -2429,7 +2429,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">版本號</label>
                     <input 
                       type="text" 
-                      value={editingPrompt.version}
+                      value={editingPrompt.version || ''}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, version: e.target.value })}
                       className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="v1.0.0"
@@ -2441,7 +2441,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">中文內容 (ZH-TW)</label>
                     <textarea 
-                      value={editingPrompt.content_zh}
+                      value={editingPrompt.content_zh || ''}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, content_zh: e.target.value })}
                       className="w-full h-96 px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm font-mono focus:outline-none focus:border-wood/30 resize-none leading-relaxed"
                       placeholder="請輸入中文提示詞內容..."
@@ -2450,7 +2450,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">日文內容 (JA-JP)</label>
                     <textarea 
-                      value={editingPrompt.content_ja}
+                      value={editingPrompt.content_ja || ''}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, content_ja: e.target.value })}
                       className="w-full h-96 px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm font-mono focus:outline-none focus:border-wood/30 resize-none leading-relaxed"
                       placeholder="請輸入日文提示詞內容..."
@@ -2462,7 +2462,7 @@ export const AdminDashboard: React.FC = () => {
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted">狀態</label>
                     <select 
-                      value={editingPrompt.status}
+                      value={editingPrompt.status || 'draft'}
                       onChange={(e) => setEditingPrompt({ ...editingPrompt, status: e.target.value as any })}
                       className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                     >
