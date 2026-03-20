@@ -35,13 +35,13 @@ async function startServer() {
 
   const connectionString = isValidDbUrl(rawDbUrl) 
     ? rawDbUrl! 
-    : "postgresql://root:CZqK9cHT4603gnwNJY8jiQ5Aas2MoO71@tpe1.clusters.zeabur.com:25860/zeabur";
+    : "postgresql://root:sy9aLY7vAHcEfji2U5b0R6n348kQV1NK@tpe1.clusters.zeabur.com:23833/zeabur";
 
   console.log("Using database connection string (masked):", connectionString.replace(/:[^:@]+@/, ":****@"));
 
   const pool = new Pool({
     connectionString,
-    ssl: false,  // Zeabur PostgreSQL doesn't support SSL
+    ssl: false, // Reverted: The server does not support SSL connections
     connectionTimeoutMillis: 10000, // 10 seconds timeout
   });
 
@@ -1511,9 +1511,6 @@ async function startServer() {
     console.log("Firebase API Key present:", !!process.env.VITE_FIREBASE_API_KEY);
     console.log("Gemini API Key present:", !!process.env.GEMINI_API_KEY);
   });
-
-  // Sync cards after server starts
-  syncCardsFromJson(pool).catch(err => console.error("Initial card sync failed:", err));
 }
 
 /**
@@ -1623,8 +1620,15 @@ async function initializeDatabase(pool: pg.Pool) {
         status TEXT DEFAULT 'active',
         version TEXT,
         category TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+    `);
+
+    // Add missing columns to ai_prompts if they don't exist
+    await pool.query(`
+      ALTER TABLE ai_prompts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      ALTER TABLE ai_prompts ADD COLUMN IF NOT EXISTS category TEXT;
     `);
 
     // Bottles table
@@ -1655,6 +1659,22 @@ async function initializeDatabase(pool: pg.Pool) {
       ALTER TABLE bottles ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
     `);
 
+    // Bottle Tags table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bottle_tags (
+        id SERIAL PRIMARY KEY,
+        tag TEXT UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Ensure UNIQUE constraint on tag for bottle_tags
+    try {
+      await pool.query(`ALTER TABLE bottle_tags ADD CONSTRAINT bottle_tags_tag_key UNIQUE (tag)`);
+    } catch (e) {
+      // Ignore if constraint already exists
+    }
+
     // Bottle Blessings table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS bottle_blessings (
@@ -1665,6 +1685,22 @@ async function initializeDatabase(pool: pg.Pool) {
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Sensitive Words table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS sensitive_words (
+        id SERIAL PRIMARY KEY,
+        word TEXT UNIQUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Ensure UNIQUE constraint on word for sensitive_words
+    try {
+      await pool.query(`ALTER TABLE sensitive_words ADD CONSTRAINT sensitive_words_word_key UNIQUE (word)`);
+    } catch (e) {
+      // Ignore if constraint already exists
+    }
 
     // Bottle Replies table
     await pool.query(`
@@ -1707,7 +1743,7 @@ async function initializeDatabase(pool: pg.Pool) {
         artist TEXT,
         category TEXT,
         element TEXT,
-        url TEXT,
+        url TEXT UNIQUE,
         is_active BOOLEAN DEFAULT TRUE,
         sort_order INTEGER DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -1725,32 +1761,12 @@ async function initializeDatabase(pool: pg.Pool) {
       ALTER TABLE music_tracks ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
     `);
 
-    // Remove unique constraint on url if it exists (to prevent issues with empty URLs)
+    // Ensure UNIQUE constraint on url for music_tracks
     try {
-      await pool.query(`
-        ALTER TABLE music_tracks DROP CONSTRAINT IF EXISTS music_tracks_url_key;
-      `);
+      await pool.query(`ALTER TABLE music_tracks ADD CONSTRAINT music_tracks_url_key UNIQUE (url)`);
     } catch (e) {
-      // Ignore if constraint doesn't exist
+      // Ignore if constraint already exists
     }
-
-    // Bottle Tags table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS bottle_tags (
-        id SERIAL PRIMARY KEY,
-        tag TEXT UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // Sensitive Words table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS sensitive_words (
-        id SERIAL PRIMARY KEY,
-        word TEXT UNIQUE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
 
     // Manifestations table
     await pool.query(`
@@ -1839,7 +1855,49 @@ async function initializeDatabase(pool: pg.Pool) {
       ON CONFLICT (uid) DO NOTHING;
     `, [adminEmail]);
 
+    // Seed default AI prompts if none exist
+    const promptCount = await pool.query("SELECT COUNT(*) FROM ai_prompts");
+    if (parseInt(promptCount.rows[0].count) === 0) {
+      const defaultPrompts = [
+        {
+          module_name: 'Core System',
+          content_zh: '你是一位專業的能量療癒師與心靈導師。你的任務是根據用戶選擇的卡片與輸入的內容，提供溫暖、有洞察力且平衡的能量分析。',
+          content_ja: 'あなたは専門的なエネルギーヒーラーであり、心の導師です。あなたの任務は、ユーザーが選択したカードと入力内容に基づいて、温かく、洞察力があり、バランスの取れたエネルギー分析を提供することです。',
+          category: 'core',
+          status: 'active',
+          version: '1.0.0'
+        },
+        {
+          module_name: 'Energy Report Generator',
+          content_zh: '請根據以下五行能量分佈與卡片訊息，生成一份詳細的能量平衡報告。報告應包含今日主題、優勢元素分析、需要平衡的建議以及一段鼓勵的話。',
+          content_ja: '以下の五行エネルギー分布とカードメッセージに基づいて、詳細なエネルギーバランスレポートを生成してください。レポートには、今日のテーマ、優勢な要素の分析、バランスを取るためのアドバイス、そして励ましの言葉を含める必要があります。',
+          category: 'scenario',
+          status: 'active',
+          version: '1.0.0'
+        },
+        {
+          module_name: 'JSON Format Specification',
+          content_zh: '請務必以 JSON 格式回傳，包含以下欄位：today_theme (今日主題), dominant_analysis (優勢分析), balance_advice (平衡建議), encouragement (鼓勵語)。',
+          content_ja: '必ず以下のフィールドを含むJSON形式で返してください：today_theme（今日のテーマ）、dominant_analysis（優勢分析）、balance_advice（バランスアドバイス）、encouragement（励ましの言葉）。',
+          category: 'format',
+          status: 'active',
+          version: '1.0.0'
+        }
+      ];
+
+      for (const p of defaultPrompts) {
+        await pool.query(
+          "INSERT INTO ai_prompts (module_name, content_zh, content_ja, category, status, version) VALUES ($1, $2, $3, $4, $5, $6)",
+          [p.module_name, p.content_zh, p.content_ja, p.category, p.status, p.version]
+        );
+      }
+      console.log("Default AI prompts seeded.");
+    }
+
     console.log("Database initialization complete.");
+
+    // Sync cards after database is initialized
+    await syncCardsFromJson(pool);
   } catch (err) {
     console.error("Error during database initialization:", err);
     throw err;
