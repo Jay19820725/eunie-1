@@ -20,8 +20,9 @@ const Manifestations = lazy(() => import('./pages/Manifestations').then(m => ({ 
 const Ocean = lazy(() => import('./pages/Ocean').then(m => ({ default: m.Ocean })));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
 const AdminLogin = lazy(() => import('./pages/AdminLogin').then(m => ({ default: m.AdminLogin })));
+const Subscription = lazy(() => import('./pages/Subscription').then(m => ({ default: m.Subscription })));
 
-type Page = 'home' | 'test' | 'report' | 'profile' | 'history' | 'admin' | 'admin-login' | 'ocean';
+type Page = 'home' | 'test' | 'report' | 'profile' | 'history' | 'admin' | 'admin-login' | 'ocean' | 'subscription';
 
 // 每日閉環階段
 export type LoopStage = 'calibration' | 'resonance' | 'reflection' | 'completed';
@@ -41,21 +42,53 @@ const SanctuaryLoader = () => (
 function AppContent() {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [loopStage, setLoopStage] = useState<LoopStage>('calibration');
+  const [streak, setStreak] = useState(0);
 
   const { profile } = useAuth();
   const { t } = useLanguage();
   const [pendingReport, setPendingReport] = useState<any>(null);
 
-  // 根據當前頁面更新閉環階段 (簡易邏輯)
+  // Fetch daily status and streak
+  useEffect(() => {
+    if (profile?.uid) {
+      fetch(`/api/users/${profile.uid}/daily-status`)
+        .then(res => res.json())
+        .then(data => {
+          setStreak(data.streak || 0);
+          if (data.isCompletedToday) {
+            setLoopStage('completed');
+          } else {
+            // If not completed today, check where they are in the loop
+            const lastStage = localStorage.getItem('lastLoopStage') as LoopStage;
+            if (lastStage && lastStage !== 'completed') {
+              setLoopStage(lastStage);
+            } else {
+              setLoopStage('calibration');
+            }
+          }
+        })
+        .catch(err => console.error("Error fetching daily status:", err));
+    }
+  }, [profile?.uid]);
+
+  // Save loopStage to localStorage
+  useEffect(() => {
+    if (loopStage) {
+      localStorage.setItem('lastLoopStage', loopStage);
+    }
+  }, [loopStage]);
+
+  // 根據當前頁面更新閉環階段
   useEffect(() => {
     if (currentPage === 'test') {
-      // 正在校準中，不更新階段
+      setLoopStage('calibration');
     } else if (currentPage === 'report') {
-      setLoopStage('resonance'); // 校準完成，進入共鳴階段
+      setLoopStage('resonance');
     } else if (currentPage === 'ocean') {
-      setLoopStage('reflection'); // 進入共鳴頁面，下一步是沉澱
+      setLoopStage('reflection');
     } else if (currentPage === 'history' || currentPage === 'journal' || currentPage === 'manifestations') {
-      setLoopStage('completed'); // 進入沉澱頁面，閉環完成
+      // Only set to completed if they were in reflection or already completed
+      setLoopStage('completed');
     }
   }, [currentPage]);
 
@@ -140,7 +173,7 @@ function AppContent() {
   const renderPage = () => {
     switch (currentPage) {
       case 'home':
-        return <Home onStartTest={() => navigate('test')} onNavigate={navigate} loopStage={loopStage} />;
+        return <Home onStartTest={() => navigate('test')} onNavigate={navigate} loopStage={loopStage} streak={streak} />;
       case 'test':
         return <EnergyTest onComplete={() => navigate('report')} />;
       case 'report':
@@ -155,6 +188,8 @@ function AppContent() {
         return <AdminDashboard />;
       case 'admin-login':
         return <AdminLogin onSuccess={() => navigate('home')} />;
+      case 'subscription':
+        return <Subscription onNavigate={(page) => navigate(page as Page)} />;
       default:
         return <Home onStartTest={() => navigate('test')} onNavigate={navigate} loopStage={loopStage} />;
     }
@@ -187,6 +222,7 @@ function AppContent() {
       />
       
       <ConnectionStatus />
+      <SoundControl />
 
       {/* Return Prompt for Completed AI Analysis */}
       <AnimatePresence>

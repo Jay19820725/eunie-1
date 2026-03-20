@@ -139,7 +139,11 @@ export interface UserProfile {
   photoURL?: string;
   role: UserRole;
   register_date: string;
-  subscription_status: 'active' | 'inactive' | 'none';
+  subscription_status: 'active' | 'inactive' | 'none' | 'trialing' | 'expired';
+  subscription_tier?: 'free' | 'premium';
+  subscription_type?: 'none' | 'monthly' | 'yearly';
+  subscription_expiry?: string;
+  trial_start_date?: string;
   last_login?: string;
   default_bottle_nickname?: string;
   settings?: {
@@ -233,6 +237,8 @@ export interface Bottle {
   element: string;
   lang: string;
   origin_locale: string;
+  energy_color_tag?: string;
+  hug_count?: number;
   card_id?: string;
   quote?: string;
   report_id?: string;

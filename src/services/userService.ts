@@ -177,9 +177,67 @@ export const userService = {
   },
 
   /**
-   * Update subscription status
+   * Start a 7-day trial
    */
-  async updateSubscription(uid: string, status: 'active' | 'inactive' | 'none'): Promise<void> {
+  async startTrial(uid: string): Promise<UserProfile> {
+    const response = await fetch('/api/subscription/trial', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId: uid }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to start trial');
+    }
+
+    const data = await response.json();
+    return {
+      ...data,
+      displayName: data.display_name,
+      photoURL: data.photo_url,
+      settings: data.settings
+    } as UserProfile;
+  },
+
+  /**
+   * Update subscription tier and status
+   */
+  async upgradeSubscription(uid: string, tier: 'premium', type: 'monthly' | 'yearly', durationMonths: number = 1): Promise<UserProfile> {
+    const response = await fetch('/api/subscription/update', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ 
+        userId: uid,
+        tier,
+        type,
+        status: 'active',
+        durationMonths
+      }),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to upgrade subscription');
+    }
+
+    const data = await response.json();
+    return {
+      ...data,
+      displayName: data.display_name,
+      photoURL: data.photo_url,
+      settings: data.settings
+    } as UserProfile;
+  },
+
+  /**
+   * Update subscription status (simple)
+   */
+  async updateSubscription(uid: string, status: 'active' | 'inactive' | 'none' | 'trialing' | 'expired'): Promise<void> {
     const response = await fetch(`/api/users/${uid}`, {
       method: 'PATCH',
       headers: {

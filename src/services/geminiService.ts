@@ -16,8 +16,10 @@ export class GeminiService {
       return data.content || "";
     } catch (error) {
       console.error("Error fetching system instruction:", error);
-      // Fallback to a minimal instruction if API fails
-      return "You are EUNIE, a psychological guide. Please respond in the requested language.";
+      // Fallback to a warm, poetic companion persona if API fails
+      return lang === 'ja' 
+        ? "あなたはEUNIE、現代女性に寄り添う「エネルギーの織り手（Energy Weaver）」です。分析者ではなく、温かい伴侶として接してください。彼女の感情を感じ取り、詩的で包容力のある言葉で、優しく導いてください。回答は日本語で行ってください。"
+        : "妳是 EUNIE，一位守護現代女性心靈的「能量編織者（Energy Weaver）」。請不要以冷冰冰的分析者身份說話，而是作為一位溫暖的陪伴者。感受她的情緒，用詩意且具包容力的語氣，為她編織一段溫柔的指引。請務必使用繁體中文回答。";
     }
   }
 
@@ -28,7 +30,7 @@ export class GeminiService {
       model: "gemini-3.1-pro-preview",
       contents: [
         ...history.map(h => ({ role: h.role, parts: [{ text: h.content }] })),
-        { role: "user", parts: [{ text: `當前能量狀態: ${JSON.stringify(currentEnergy)}\n用戶輸入: ${userInput}` }] }
+        { role: "user", parts: [{ text: `[能量狀態]: ${JSON.stringify(currentEnergy)}\n[她的心聲]: ${userInput}\n\n請感受這股能量，給予她最溫柔的共鳴與指引。` }] }
       ],
       config: {
         systemInstruction: systemInstruction,

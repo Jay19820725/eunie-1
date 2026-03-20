@@ -82,6 +82,11 @@ export const translations = {
     home_yesterday_residue: "昨日能量殘留",
     home_continue_loop: "繼續今日閉環",
     home_yesterday_none: "尚無紀錄",
+    home_streak_title: "連續共鳴天數",
+    home_streak_unit: "天",
+    home_growth_title: "能量成長軌跡",
+    home_growth_subtitle: "過去 7 日",
+    home_balance_label: "平衡度",
 
     // Energy Test Page
     test_step_1: "第一步",
@@ -361,6 +366,11 @@ export const translations = {
     home_yesterday_residue: "昨日のエネルギー残渣",
     home_continue_loop: "今日のループを続ける",
     home_yesterday_none: "記録なし",
+    home_streak_title: "連続共鳴日数",
+    home_streak_unit: "日",
+    home_growth_title: "エネルギー成長の軌跡",
+    home_growth_subtitle: "過去 7 日間",
+    home_balance_label: "バランス度",
 
     // Energy Test Page
     test_step_1: "Step 1",

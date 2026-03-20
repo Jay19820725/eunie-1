@@ -14,12 +14,8 @@ const ElementIcon = ({ element, size = 14 }: { element: string, size?: number })
   }
 };
 
-interface SoundControlProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export const SoundControl: React.FC<SoundControlProps> = ({ isOpen, onClose }) => {
+export const SoundControl: React.FC = () => {
+  const [isOpen, setIsOpen] = useState(false);
   const { isPlaying, currentSound, togglePlay, setSound, playbackMode, setPlaybackMode, nextTrack, tracks } = useSoundscape();
 
   return (
@@ -88,6 +84,45 @@ export const SoundControl: React.FC<SoundControlProps> = ({ isOpen, onClose }) =
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Toggle Button */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setIsOpen(!isOpen)}
+        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${
+          isOpen 
+            ? 'bg-ink text-white rotate-90' 
+            : isPlaying 
+              ? 'bg-white text-ink border border-ink/5' 
+              : 'bg-white/40 text-ink/40 border border-ink/5 backdrop-blur-sm'
+        }`}
+      >
+        <AnimatePresence mode="wait">
+          {isPlaying ? (
+            <motion.div
+              key="playing"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+              className="flex gap-0.5 items-center h-4"
+            >
+              <motion.div animate={{ scaleY: [1, 2, 1] }} transition={{ repeat: Infinity, duration: 0.5 }} className="w-0.5 h-2 bg-current rounded-full" />
+              <motion.div animate={{ scaleY: [1, 2.5, 1] }} transition={{ repeat: Infinity, duration: 0.7, delay: 0.1 }} className="w-0.5 h-3 bg-current rounded-full" />
+              <motion.div animate={{ scaleY: [1, 1.8, 1] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} className="w-0.5 h-2 bg-current rounded-full" />
+            </motion.div>
+          ) : (
+            <motion.div
+              key="static"
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.5 }}
+            >
+              <Music size={20} strokeWidth={1.5} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.button>
     </div>
   );
 };

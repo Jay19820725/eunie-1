@@ -10,6 +10,7 @@ interface HomeProps {
   onStartTest: () => void;
   loopStage: LoopStage;
   onNavigate: (page: string) => void;
+  streak?: number;
 }
 
 const EnergyOrb = ({ color, delay, initialPos, size = "100vw" }: { color: string; delay: number; initialPos: { x: string; y: string }; size?: string }) => (
@@ -67,10 +68,11 @@ const StatusCard = ({ title, value, icon: Icon, delay = 0 }: { title: string; va
   </motion.div>
 );
 
-export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate }) => {
-  const { t } = useLanguage();
+export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, streak = 0 }) => {
+  const { t, language } = useLanguage();
   const { profile } = useAuth();
   const [lastEnergy, setLastEnergy] = useState<string | null>(null);
+  const [recentReports, setRecentReports] = useState<any[]>([]);
 
   useEffect(() => {
     if (profile?.uid) {
@@ -80,6 +82,7 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate }
           if (data.reports && data.reports.length > 0) {
             const latest = data.reports[0];
             setLastEnergy(latest.dominantElement || null);
+            setRecentReports(data.reports.slice(0, 7).reverse());
           }
         })
         .catch(() => setLastEnergy(null));
@@ -165,12 +168,56 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate }
               delay={1.5}
             />
             <StatusCard 
-              title={t('home_yesterday_residue')} 
-              value={lastEnergy ? t(`home_element_${lastEnergy}`) : t('home_yesterday_none')} 
-              icon={Calendar} 
+              title={t('home_streak_title' as any)} 
+              value={streak > 0 ? `${streak} ${t('home_streak_unit' as any)}` : t('home_yesterday_none')} 
+              icon={Zap} 
               delay={1.7}
             />
           </div>
+
+          {/* Growth Trajectory (New) */}
+          {recentReports.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 2, delay: 2 }}
+              className="w-full max-w-2xl px-4 space-y-6"
+            >
+              <div className="flex items-center justify-between px-2">
+                <span className="text-[9px] tracking-[0.3em] uppercase text-ink/30 font-medium">
+                  {t('home_growth_title' as any)}
+                </span>
+                <span className="text-[9px] tracking-[0.3em] uppercase text-ink/20 font-light">
+                  {t('home_growth_subtitle' as any)}
+                </span>
+              </div>
+              <div className="flex items-end justify-between h-16 px-4 border-b border-ink/[0.03]">
+                {recentReports.map((report, idx) => (
+                  <div key={report.id} className="flex flex-col items-center gap-3 group relative">
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${(report.balanceScore || 50)}%` }}
+                      transition={{ duration: 1.5, delay: 2.2 + (idx * 0.1) }}
+                      className={`w-1.5 rounded-t-full transition-all duration-500 ${
+                        report.dominantElement === 'wood' ? 'bg-wood' :
+                        report.dominantElement === 'fire' ? 'bg-fire' :
+                        report.dominantElement === 'earth' ? 'bg-earth' :
+                        report.dominantElement === 'metal' ? 'bg-metal' :
+                        'bg-water'
+                      } opacity-40 group-hover:opacity-100`}
+                    />
+                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-md px-2 py-1 rounded-md border border-ink/5 text-[8px] text-ink/60 whitespace-nowrap z-20">
+                      {report.balanceScore}% {t('home_balance_label' as any)}
+                    </div>
+                  </div>
+                ))}
+                {/* Fill empty days if less than 7 */}
+                {Array.from({ length: Math.max(0, 7 - recentReports.length) }).map((_, i) => (
+                  <div key={`empty-${i}`} className="w-1.5 h-1 bg-ink/[0.03] rounded-t-full" />
+                ))}
+              </div>
+            </motion.div>
+          )}
 
           {loopStage === 'calibration' ? (
             <Button 

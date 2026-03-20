@@ -27,6 +27,7 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
   const [content, setContent] = useState('');
   const [quote, setQuote] = useState('');
   const [nickname, setNickname] = useState('');
+  const [energyColor, setEnergyColor] = useState('#33A6B8'); // Default water color
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingReports, setIsLoadingReports] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -122,7 +123,8 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
           cardName: selectedCard.name,
           quote: quote.trim(),
           reportId: selectedReport.id,
-          nickname: nickname.trim()
+          nickname: nickname.trim(),
+          energyColorTag: energyColor
         }),
       });
 
@@ -312,6 +314,33 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
               <div className="absolute bottom-4 right-6 text-[10px] tracking-widest text-ink/20 uppercase">
                 {language === 'zh' ? `字數限制：${content.length}/200` : `文字数制限：${content.length}/200`}
               </div>
+            </div>
+          </div>
+
+          {/* Energy Color Selection */}
+          <div className="space-y-4">
+            <label className="text-[12px] tracking-widest text-ink/40 uppercase px-1">
+              {language === 'zh' ? '能量色彩' : 'エネルギーカラー'}
+            </label>
+            <div className="flex flex-wrap gap-4 px-1">
+              {[
+                { color: '#33A6B8', label: 'Water' },
+                { color: '#E94E77', label: 'Fire' },
+                { color: '#A8D8B9', label: 'Wind' },
+                { color: '#F7D94C', label: 'Light' },
+                { color: '#9B59B6', label: 'Spirit' },
+                { color: '#E67E22', label: 'Earth' }
+              ].map((c) => (
+                <button
+                  key={c.color}
+                  onClick={() => setEnergyColor(c.color)}
+                  className={`w-10 h-10 rounded-full transition-all border-2 ${
+                    energyColor === c.color ? 'scale-110 border-ink shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
+                  }`}
+                  style={{ backgroundColor: c.color }}
+                  title={c.label}
+                />
+              ))}
             </div>
           </div>
 

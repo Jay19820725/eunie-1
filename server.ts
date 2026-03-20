@@ -263,6 +263,65 @@ async function startServer() {
     }
   });
 
+  // Subscription API
+  app.post("/api/subscription/trial", async (req, res) => {
+    const { userId } = req.body;
+    try {
+      const expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 7); // 7 days trial
+      
+      const result = await pool.query(
+        `UPDATE users SET 
+          subscription_status = 'trialing',
+          subscription_tier = 'premium',
+          subscription_type = 'monthly',
+          subscription_expiry = $1,
+          trial_start_date = CURRENT_TIMESTAMP
+         WHERE uid = $2 RETURNING *`,
+        [expiryDate.toISOString(), userId]
+      );
+      
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error("Error starting trial:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/subscription/update", async (req, res) => {
+    const { userId, tier, type, status, durationMonths } = req.body;
+    try {
+      let expiryDate = null;
+      if (status === 'active') {
+        expiryDate = new Date();
+        expiryDate.setMonth(expiryDate.getMonth() + (durationMonths || 1));
+      }
+      
+      const result = await pool.query(
+        `UPDATE users SET 
+          subscription_status = $1,
+          subscription_tier = $2,
+          subscription_type = $3,
+          subscription_expiry = $4
+         WHERE uid = $5 RETURNING *`,
+        [status, tier, type, expiryDate ? expiryDate.toISOString() : null, userId]
+      );
+      
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error("Error updating subscription:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   // Journal API
   app.post("/api/journal", async (req, res) => {
     const { user_id, emotion_tag, insight, intention } = req.body;
@@ -455,6 +514,70 @@ async function startServer() {
       res.json(mappedReport);
     } catch (err) {
       console.error("Error fetching single report:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/users/:uid/daily-status", async (req, res) => {
+    const { uid } = req.params;
+    try {
+      // 1. Check if completed today
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const todayResult = await pool.query(
+        "SELECT id, today_theme FROM energy_reports WHERE user_id = $1 AND timestamp >= $2 ORDER BY timestamp DESC LIMIT 1",
+        [uid, today]
+      );
+      
+      const isCompletedToday = todayResult.rows.length > 0 && !!todayResult.rows[0].today_theme;
+      
+      // 2. Calculate streak
+      const reportsResult = await pool.query(
+        "SELECT DISTINCT DATE(timestamp) as report_date FROM energy_reports WHERE user_id = $1 ORDER BY report_date DESC",
+        [uid]
+      );
+      
+      let streak = 0;
+      if (reportsResult.rows.length > 0) {
+        const dates = reportsResult.rows.map(r => {
+          const d = new Date(r.report_date);
+          d.setHours(0, 0, 0, 0);
+          return d;
+        });
+        
+        let checkDate = new Date();
+        checkDate.setHours(0, 0, 0, 0);
+        
+        // If today is not in the list, check if yesterday is
+        const todayStr = checkDate.toISOString().split('T')[0];
+        const hasToday = dates.some(d => d.toISOString().split('T')[0] === todayStr);
+        
+        if (!hasToday) {
+          checkDate.setDate(checkDate.getDate() - 1);
+        }
+        
+        for (let i = 0; i < dates.length; i++) {
+          const dateStr = dates[i].toISOString().split('T')[0];
+          const checkStr = checkDate.toISOString().split('T')[0];
+          
+          if (dateStr === checkStr) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+          } else {
+            // Check if we skipped a day
+            if (dateStr < checkStr) break;
+          }
+        }
+      }
+      
+      res.json({
+        isCompletedToday,
+        streak,
+        lastReportId: todayResult.rows[0]?.id || null
+      });
+    } catch (err) {
+      console.error("Error fetching daily status:", err);
       res.status(500).json({ error: "Internal server error" });
     }
   });
@@ -665,9 +788,10 @@ async function startServer() {
       }
 
       // 5. Save Bottle
+      const { energyColorTag } = req.body;
       const result = await pool.query(
-        "INSERT INTO bottles (user_id, content, element, lang, origin_locale, card_id, quote, report_id, sender_nickname, card_image_url, card_name_saved) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
-        [userId, content, element, lang, originLocale, cardId, quote, reportId, nickname, cardImageUrl, cardName]
+        "INSERT INTO bottles (user_id, content, element, lang, origin_locale, card_id, quote, report_id, sender_nickname, card_image_url, card_name_saved, energy_color_tag) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *",
+        [userId, content, element, lang, originLocale, cardId, quote, reportId, nickname, cardImageUrl, cardName, energyColorTag]
       );
       
       res.json(result.rows[0]);
@@ -686,7 +810,8 @@ async function startServer() {
                 COALESCE(b.sender_nickname, u.display_name) as sender_name,
                 COALESCE(b.card_image_url, ci.image_url, cw.image_url) as card_image,
                 COALESCE(b.card_name_saved, ci.name, cw.name) as card_name,
-                er.report_data
+                er.report_data,
+                (SELECT COUNT(*) FROM bottle_blessings WHERE bottle_id = b.id) as blessing_count
          FROM bottles b 
          JOIN users u ON b.user_id = u.uid 
          LEFT JOIN cards_image ci ON b.card_id = ci.id
@@ -746,6 +871,23 @@ async function startServer() {
       res.json({ success: true });
     } catch (err) {
       console.error("Error blessing bottle:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/bottles/:id/hug", async (req, res) => {
+    const { id } = req.params;
+    try {
+      const result = await pool.query(
+        "UPDATE bottles SET hug_count = hug_count + 1 WHERE id = $1 RETURNING hug_count",
+        [id]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Bottle not found" });
+      }
+      res.json({ success: true, hugCount: result.rows[0].hug_count });
+    } catch (err) {
+      console.error("Error hugging bottle:", err);
       res.status(500).json({ error: "Internal server error" });
     }
   });
@@ -1646,6 +1788,7 @@ async function initializeDatabase(pool: pg.Pool) {
         sender_nickname TEXT,
         card_image_url TEXT,
         card_name_saved TEXT,
+        energy_color_tag TEXT,
         view_count INTEGER DEFAULT 0,
         is_active BOOLEAN DEFAULT TRUE,
         last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1657,6 +1800,7 @@ async function initializeDatabase(pool: pg.Pool) {
     await pool.query(`
       ALTER TABLE bottles ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0;
       ALTER TABLE bottles ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+      ALTER TABLE bottles ADD COLUMN IF NOT EXISTS energy_color_tag TEXT;
     `);
 
     // Bottle Tags table

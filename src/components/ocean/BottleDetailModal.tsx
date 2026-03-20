@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Globe, Languages, Heart, Clock, MapPin } from 'lucide-react';
+import { X, Globe, Languages, Heart, Clock, MapPin, Sparkles } from 'lucide-react';
 import { Bottle, BottleTag } from '../../core/types';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { LUMINA_CARDS } from '../../core/cards';
@@ -11,10 +11,12 @@ interface BottleDetailModalProps {
   onClose: () => void;
   onTranslate: () => void;
   onBless: (tagId: string) => void;
+  onHug?: (bottleId: string) => void;
   onSave?: (bottleId: string, reply: string) => void;
   translatedContent: string | null;
   isTranslating: boolean;
   isBlessing: boolean;
+  isHugging?: boolean;
   tags: BottleTag[];
   isSaved?: boolean;
   isOwnBottle?: boolean;
@@ -25,10 +27,12 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
   onClose,
   onTranslate,
   onBless,
+  onHug,
   onSave,
   translatedContent,
   isTranslating,
   isBlessing,
+  isHugging = false,
   tags,
   isSaved = false,
   isOwnBottle = false
@@ -165,6 +169,10 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             className="relative w-full max-w-5xl h-[90vh] md:h-[80vh] bg-[#FDFCF8] rounded-[3rem] shadow-2xl overflow-hidden flex flex-col md:flex-row"
+            style={activeBottle.energy_color_tag ? {
+              boxShadow: `0 0 50px ${activeBottle.energy_color_tag}20`,
+              border: `1px solid ${activeBottle.energy_color_tag}30`
+            } : {}}
           >
             {/* Close Button - Desktop */}
             <button
@@ -231,6 +239,14 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                         {activeBottle.sender_name || 'Anonymous'}
                       </span>
                     </div>
+                    {activeBottle.hug_count !== undefined && (
+                      <div className="flex items-center gap-2 text-ink/40">
+                        <Sparkles size={14} className="text-water/60" />
+                        <span className="text-[10px] tracking-[0.2em] uppercase font-medium font-mono">
+                          {activeBottle.hug_count} Hugs
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -334,6 +350,17 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                         {language === 'ja' ? tag.text_ja : tag.text_zh}
                       </button>
                     ))}
+                    
+                    {!isOwnBottle && onHug && (
+                      <button
+                        onClick={() => onHug(activeBottle.id)}
+                        disabled={isHugging}
+                        className="group py-2.5 px-5 rounded-full border border-water/40 bg-water/5 text-[11px] text-water hover:bg-water hover:text-white transition-all flex items-center gap-2 uppercase tracking-[0.1em] font-bold"
+                      >
+                        <Sparkles size={12} className={`${isHugging ? 'animate-spin' : 'group-hover:scale-110'} transition-transform`} />
+                        {language === 'zh' ? '給予擁抱' : 'ハグを送る'}
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

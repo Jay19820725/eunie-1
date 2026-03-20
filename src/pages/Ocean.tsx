@@ -31,6 +31,7 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
   const [tags, setTags] = useState<BottleTag[]>([]);
   const [isTranslating, setIsTranslating] = useState(false);
   const [isBlessing, setIsBlessing] = useState(false);
+  const [isHugging, setIsHugging] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isCastModalOpen, setIsCastModalOpen] = useState(false);
   const [showResonanceSuccess, setShowResonanceSuccess] = useState(false);
@@ -278,6 +279,27 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
       console.error(err);
     } finally {
       setIsBlessing(false);
+    }
+  };
+
+  const handleHug = async (bottleId: string) => {
+    if (isHugging) return;
+    setIsHugging(true);
+    try {
+      const res = await fetch(`/api/bottles/${bottleId}/hug`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        if (pickedBottle && pickedBottle.id === bottleId) {
+          setPickedBottle({ ...pickedBottle, hug_count: data.hugCount });
+        }
+        // Also update in myBottles or savedBottles if present
+        setMyBottles(prev => prev.map(b => b.id === bottleId ? { ...b, hug_count: data.hugCount } : b));
+        setSavedBottles(prev => prev.map(b => b.id === bottleId ? { ...b, hug_count: data.hugCount } : b));
+      }
+    } catch (err) {
+      console.error('Failed to hug bottle:', err);
+    } finally {
+      setIsHugging(false);
     }
   };
 
@@ -544,6 +566,10 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
                                 <Heart size={12} className={bottle.blessing_count > 0 ? 'text-fire' : ''} />
                                 <span className="text-[10px] font-mono">{bottle.blessing_count}</span>
                               </div>
+                              <div className="flex items-center gap-2 text-white/40">
+                                <Sparkles size={12} className={bottle.hug_count > 0 ? 'text-water' : ''} />
+                                <span className="text-[10px] font-mono">{bottle.hug_count || 0}</span>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -716,10 +742,12 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
             }}
             onTranslate={handleTranslate}
             onBless={sendBlessing}
+            onHug={handleHug}
             onSave={handleSaveBottle}
             translatedContent={translatedContent}
             isTranslating={isTranslating}
             isBlessing={isBlessing}
+            isHugging={isHugging}
             tags={tags}
             isSaved={!!pickedBottle.saved_id}
             isOwnBottle={profile?.uid === pickedBottle.user_id}
