@@ -1,5 +1,7 @@
 import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { Navigation } from './components/layout/Navigation';
+import { LuminaBottle } from './components/ui/LuminaBottle';
+import { PurchaseModal } from './components/PurchaseModal';
 import { KomorebiBackground } from './components/layout/KomorebiBackground';
 import { ConnectionStatus } from './components/ui/ConnectionStatus';
 import { SEOManager } from './components/SEOManager';
@@ -8,6 +10,7 @@ import { Sparkles, X, ArrowRight } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
 import { SoundscapeProvider } from './store/SoundscapeContext';
+import { TestProvider, useTest } from './store/TestContext';
 import { SoundControl } from './components/layout/SoundControl';
 
 // Lazy load pages for code splitting
@@ -46,6 +49,7 @@ function AppContent() {
 
   const { profile } = useAuth();
   const { t } = useLanguage();
+  const { isPurchaseModalOpen, setIsPurchaseModalOpen, fetchUserPoints } = useTest();
   const [pendingReport, setPendingReport] = useState<any>(null);
 
   // Fetch daily status and streak
@@ -219,6 +223,15 @@ function AppContent() {
         onNavigate={(path) => navigate(path as Page)} 
         loopStage={loopStage}
         onStartTest={() => navigate('test')}
+      />
+      
+      <LuminaBottle />
+      <PurchaseModal 
+        isOpen={isPurchaseModalOpen} 
+        onClose={() => setIsPurchaseModalOpen(false)}
+        onSuccess={() => {
+          fetchUserPoints();
+        }}
       />
       
       <ConnectionStatus />

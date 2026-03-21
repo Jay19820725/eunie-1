@@ -4,6 +4,7 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { Button } from '../components/ui/Button';
 import { User, LogOut, LogIn, Shield, Settings, Crown, Sparkles, BookOpen, BarChart3, Map, Star, Activity, Languages, Palette } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useTest } from '../store/TestContext';
 import { userService } from '../services/userService';
 import { ManifestationSection } from '../components/profile/ManifestationSection';
 import { UserProfile as UserProfileType } from '../core/types';
@@ -16,6 +17,7 @@ interface UserProfileProps {
 
 export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
   const { user, profile, login, logout, loading, refreshProfile, setProfile, isAdmin, isSubscribed, isPremium } = useAuth();
+  const { userPoints, setIsPurchaseModalOpen } = useTest();
   const { t, language, setLanguage } = useLanguage();
   const [isUpgrading, setIsUpgrading] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
@@ -144,6 +146,64 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
               ) : null}
             </div>
             <p className="text-sm md:text-lg text-ink-muted font-light tracking-widest">{user ? t('energy_resonant') : t('searching_resonance')}</p>
+            
+            {/* Points & Subscription Card */}
+            {user && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.2 }}
+                className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8"
+              >
+                <div className="p-6 bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl shadow-sm flex flex-col justify-between gap-4">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2 bg-wood/10 rounded-xl">
+                      <Sparkles size={20} className="text-wood" />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-widest text-ink-muted">{language === 'ja' ? '霊光エネルギー' : '靈光點數'}</span>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-serif text-ink">{userPoints}</span>
+                    <span className="text-xs text-ink-muted uppercase tracking-widest">{language === 'ja' ? 'ポイント' : '點'}</span>
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => setIsPurchaseModalOpen(true)}
+                    className="w-full h-10 text-[10px] tracking-widest uppercase border-wood/20 text-wood hover:bg-wood/5"
+                  >
+                    {language === 'ja' ? 'チャージする' : '立即儲值'}
+                  </Button>
+                </div>
+
+                <div className="p-6 bg-white/40 backdrop-blur-xl border border-white/60 rounded-3xl shadow-sm flex flex-col justify-between gap-4">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2 bg-wood/10 rounded-xl">
+                      <Crown size={20} className="text-wood" />
+                    </div>
+                    <span className="text-[10px] uppercase tracking-widest text-ink-muted">{language === 'ja' ? 'サブスクリプション' : '訂閱狀態'}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-lg font-serif text-ink">
+                      {isPremium ? (language === 'ja' ? 'プレミアム会員' : '尊榮會員') : (language === 'ja' ? '無料会員' : '一般會員')}
+                    </span>
+                    <span className="text-[10px] text-ink-muted uppercase tracking-widest">
+                      {isPremium ? (language === 'ja' ? '有効期限内' : '服務進行中') : (language === 'ja' ? '機能制限あり' : '功能受限')}
+                    </span>
+                  </div>
+                  {!isPremium && (
+                    <Button 
+                      size="sm" 
+                      onClick={() => setIsPurchaseModalOpen(true)}
+                      className="w-full h-10 text-[10px] tracking-widest uppercase shadow-lg shadow-wood/5"
+                    >
+                      {language === 'ja' ? 'アップグレード' : '升級方案'}
+                    </Button>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
             {user && (
               <div className="flex flex-wrap gap-4 mt-6 justify-center md:justify-start">
                 {isEditing ? (

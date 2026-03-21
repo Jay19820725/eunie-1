@@ -209,21 +209,99 @@ async function startServer() {
   });
 
   app.post(["/api/users", "/api/users/"], async (req, res) => {
-    const { uid, email, displayName, photoURL, role, subscription_status } = req.body;
+    const { uid, email, displayName, photoURL, role, subscription_status, points, subscription_tier, is_first_purchase } = req.body;
     console.log("POST /api/users - Body:", req.body);
     try {
       const result = await pool.query(
-        `INSERT INTO users (uid, email, display_name, photo_url, role, subscription_status) 
-         VALUES ($1, $2, $3, $4, $5, $6) 
+        `INSERT INTO users (uid, email, display_name, photo_url, role, subscription_status, points, subscription_tier, is_first_purchase) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
          ON CONFLICT (uid) DO UPDATE SET 
            email = EXCLUDED.email, 
+           display_name = COALESCE(EXCLUDED.display_name, users.display_name),
+           photo_url = COALESCE(EXCLUDED.photo_url, users.photo_url),
            last_login = CURRENT_TIMESTAMP 
          RETURNING *`,
-        [uid, email, displayName, photoURL, role || 'free_member', subscription_status || 'none']
+        [
+          uid, 
+          email, 
+          displayName, 
+          photoURL, 
+          role || 'free_member', 
+          subscription_status || 'none',
+          points !== undefined ? points : 0,
+          subscription_tier || 'none',
+          is_first_purchase !== undefined ? is_first_purchase : true
+        ]
       );
       res.json(result.rows[0]);
     } catch (err) {
       console.error("Error creating/updating user:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.get("/api/users/:uid/points", async (req, res) => {
+    const { uid } = req.params;
+    try {
+      const result = await pool.query(
+        "SELECT points, subscription_status, subscription_tier, subscription_expiry, is_first_purchase FROM users WHERE uid = $1",
+        [uid]
+      );
+      if (result.rows.length === 0) {
+        return res.json({ points: 0, subscription_status: 'none', is_first_purchase: true });
+      }
+      res.json(result.rows[0]);
+    } catch (err) {
+      console.error("Error fetching user points:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/payments/simulate", async (req, res) => {
+    const { userId, type, amount, currency } = req.body;
+    try {
+      if (type === 'subscription') {
+        const expiry = new Date();
+        expiry.setMonth(expiry.getMonth() + 1);
+        await pool.query(
+          `UPDATE users SET 
+            subscription_status = 'active', 
+            subscription_tier = 'premium', 
+            subscription_expiry = $1, 
+            points = 15,
+            is_first_purchase = FALSE
+           WHERE uid = $2`,
+          [expiry, userId]
+        );
+      } else if (type === 'points_pack') {
+        await pool.query(
+          "UPDATE users SET points = points + 15, is_first_purchase = FALSE WHERE uid = $1",
+          [userId]
+        );
+      } else if (type === 'trial_point') {
+        await pool.query(
+          "UPDATE users SET points = points + 1, is_first_purchase = FALSE WHERE uid = $1",
+          [userId]
+        );
+      }
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Error simulating payment:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/reports/consume-points", async (req, res) => {
+    const { userId } = req.body;
+    try {
+      const userResult = await pool.query("SELECT points FROM users WHERE uid = $1", [userId]);
+      if (userResult.rows.length === 0 || userResult.rows[0].points <= 0) {
+        return res.status(403).json({ error: "Insufficient points" });
+      }
+      await pool.query("UPDATE users SET points = points - 1 WHERE uid = $1", [userId]);
+      res.json({ success: true });
+    } catch (err) {
+      console.error("Error consuming points:", err);
       res.status(500).json({ error: "Internal server error" });
     }
   });
@@ -1692,7 +1770,11 @@ async function initializeDatabase(pool: pg.Pool) {
         display_name TEXT,
         photo_url TEXT,
         role TEXT DEFAULT 'free_member',
+        points INTEGER DEFAULT 0,
         subscription_status TEXT DEFAULT 'none',
+        subscription_tier TEXT DEFAULT 'none',
+        subscription_expiry TIMESTAMP,
+        is_first_purchase BOOLEAN DEFAULT TRUE,
         default_bottle_nickname TEXT,
         register_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -1701,7 +1783,11 @@ async function initializeDatabase(pool: pg.Pool) {
 
     // Add missing columns to users if they don't exist
     await pool.query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS points INTEGER DEFAULT 0;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'none';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_tier TEXT DEFAULT 'none';
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS subscription_expiry TIMESTAMP;
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS is_first_purchase BOOLEAN DEFAULT TRUE;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS default_bottle_nickname TEXT;
       ALTER TABLE users ADD COLUMN IF NOT EXISTS register_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
     `);
