@@ -1303,7 +1303,9 @@ async function startServer() {
   });
 
   app.post("/api/admin/music", async (req, res) => {
-    const { id, name, title, artist, category, element, url, is_active, sort_order } = req.body;
+    const { name, title, artist, category, element, url, is_active, sort_order } = req.body;
+    
+    console.log(`[Admin] Saving music track: ${name} (${url})`);
     
     // Basic validation
     if (!url) {
@@ -1315,29 +1317,26 @@ async function startServer() {
     const safeSortOrder = isNaN(parsedSortOrder) ? 0 : parsedSortOrder;
 
     try {
-      if (id) {
-        const result = await pool.query(
-          "UPDATE music_tracks SET name = $1, title = $2, artist = $3, category = $4, element = $5, url = $6, is_active = $7, sort_order = $8 WHERE id = $9 RETURNING *",
-          [name, title, artist, category, element, url, is_active, safeSortOrder, id]
-        );
-        if (result.rowCount === 0) {
-          return res.status(404).json({ error: "找不到該音樂軌道" });
-        }
-      } else {
-        await pool.query(
-          "INSERT INTO music_tracks (name, title, artist, category, element, url, is_active, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-          [name, title, artist, category, element, url, is_active, safeSortOrder]
-        );
-      }
-      res.json({ success: true });
+      // Use UPSERT logic based on URL to allow overwriting
+      const result = await pool.query(
+        `INSERT INTO music_tracks (name, title, artist, category, element, url, is_active, sort_order) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+         ON CONFLICT (url) DO UPDATE SET 
+           name = EXCLUDED.name, 
+           title = EXCLUDED.title, 
+           artist = EXCLUDED.artist, 
+           category = EXCLUDED.category, 
+           element = EXCLUDED.element, 
+           is_active = EXCLUDED.is_active, 
+           sort_order = EXCLUDED.sort_order
+         RETURNING *`,
+        [name, title, artist, category, element, url, is_active, safeSortOrder]
+      );
+      
+      console.log(`[Admin] Successfully saved music track. ID: ${result.rows[0].id}`);
+      res.json(result.rows[0]);
     } catch (err: any) {
-      console.error("Error saving music track:", err);
-      
-      // Handle unique constraint violation for URL
-      if (err.code === '23505') {
-        return res.status(400).json({ error: "該音檔 URL 已被其他音樂使用，請檢查是否重複" });
-      }
-      
+      console.error("[Admin] Error saving music track:", err);
       res.status(500).json({ 
         error: "Internal server error", 
         details: err.message,
@@ -1901,9 +1900,11 @@ async function initializeDatabase(pool: pg.Pool) {
       );
     `);
 
-    // Music Tracks table
+    // Rebuild Music Tracks table (Drop and Recreate as requested)
+    console.log("Rebuilding music_tracks table...");
+    await pool.query(`DROP TABLE IF EXISTS music_tracks CASCADE;`);
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS music_tracks (
+      CREATE TABLE music_tracks (
         id SERIAL PRIMARY KEY,
         name TEXT,
         title TEXT,
@@ -1917,23 +1918,63 @@ async function initializeDatabase(pool: pg.Pool) {
       );
     `);
 
-    // Add missing columns to music_tracks if they don't exist
-    await pool.query(`
-      ALTER TABLE music_tracks ADD COLUMN IF NOT EXISTS name TEXT;
-      ALTER TABLE music_tracks ADD COLUMN IF NOT EXISTS title TEXT;
-      ALTER TABLE music_tracks ADD COLUMN IF NOT EXISTS artist TEXT;
-      ALTER TABLE music_tracks ADD COLUMN IF NOT EXISTS category TEXT;
-      ALTER TABLE music_tracks ADD COLUMN IF NOT EXISTS element TEXT;
-      ALTER TABLE music_tracks ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
-      ALTER TABLE music_tracks ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
-    `);
+    // Seed data
+    const seedTracks = [
+      {
+        name: "Little Forest Spirit Tea Time",
+        title: "Little Forest Spirit Tea Time",
+        artist: "EUNIE",
+        category: "meditation",
+        element: "wood",
+        url: "https://firebasestorage.googleapis.com/v0/b/yuni-8f439.firebasestorage.app/o/eunie-assets%2Faudio%2FLittle%20Forest%20Spirit%20Tea%20Time%EF%BC%88%E6%9C%A8%EF%BC%89%20(1).mp3?alt=media&token=a4b620ff-080e-4ada-9979-3a3cd5221d16",
+        sort_order: 1
+      },
+      {
+        name: "Little Ember Tea Time",
+        title: "Little Ember Tea Time",
+        artist: "EUNIE",
+        category: "meditation",
+        element: "fire",
+        url: "https://firebasestorage.googleapis.com/v0/b/yuni-8f439.firebasestorage.app/o/eunie-assets%2Faudio%2FLittle%20Ember%20Tea%20Time%EF%BC%88%E7%81%AB%EF%BC%89%20(1).mp3?alt=media&token=a2ff4eae-aa55-4021-a52e-de4b2583e3e7",
+        sort_order: 2
+      },
+      {
+        name: "Little Mountain Garden Tea Time",
+        title: "Little Mountain Garden Tea Time",
+        artist: "EUNIE",
+        category: "meditation",
+        element: "earth",
+        url: "https://firebasestorage.googleapis.com/v0/b/yuni-8f439.firebasestorage.app/o/eunie-assets%2Faudio%2FLittle%20Mountain%20Garden%20Tea%20Time%EF%BC%88%E5%9C%9F%EF%BC%89%20(1).mp3?alt=media&token=bcbc6bc1-723e-47f5-8fef-4c8b4354c392",
+        sort_order: 3
+      },
+      {
+        name: "Little Silver Bell Tea Time",
+        title: "Little Silver Bell Tea Time",
+        artist: "EUNIE",
+        category: "meditation",
+        element: "metal",
+        url: "https://firebasestorage.googleapis.com/v0/b/yuni-8f439.firebasestorage.app/o/eunie-assets%2Faudio%2FLittle%20Silver%20Bell%20Tea%20Time%EF%BC%88%E9%87%91%EF%BC%89%20(1).mp3?alt=media&token=ca1588a8-ec99-4729-a6e8-4e25cc395e2e",
+        sort_order: 4
+      },
+      {
+        name: "Little River Breeze Tea Time",
+        title: "Little River Breeze Tea Time",
+        artist: "EUNIE",
+        category: "meditation",
+        element: "water",
+        url: "https://firebasestorage.googleapis.com/v0/b/yuni-8f439.firebasestorage.app/o/eunie-assets%2Faudio%2FLittle%20River%20Breeze%20Tea%20Time%EF%BC%88%E6%B0%B4%EF%BC%89%20(1).mp3?alt=media&token=40dfaf97-93fb-4e74-bea2-d95fabd71b0c",
+        sort_order: 5
+      }
+    ];
 
-    // Ensure UNIQUE constraint on url for music_tracks
-    try {
-      await pool.query(`ALTER TABLE music_tracks ADD CONSTRAINT music_tracks_url_key UNIQUE (url)`);
-    } catch (e) {
-      // Ignore if constraint already exists
+    for (const track of seedTracks) {
+      await pool.query(
+        `INSERT INTO music_tracks (name, title, artist, category, element, url, sort_order) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (url) DO NOTHING`,
+        [track.name, track.title, track.artist, track.category, track.element, track.url, track.sort_order]
+      );
     }
+    console.log("Music tracks table rebuilt and seeded.");
 
     // Manifestations table
     await pool.query(`
@@ -2002,16 +2043,6 @@ async function initializeDatabase(pool: pg.Pool) {
       INSERT INTO sensitive_words (word)
       VALUES ('scam'), ('fraud'), ('abuse'), ('hate'), ('violence')
       ON CONFLICT (word) DO NOTHING;
-    `);
-
-    // Seed default music tracks
-    await pool.query(`
-      INSERT INTO music_tracks (name, element, url, is_active, sort_order)
-      VALUES 
-      ('Forest Meditation', 'wood', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', TRUE, 1),
-      ('Ocean Waves', 'water', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3', TRUE, 2),
-      ('Zen Garden', 'earth', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3', TRUE, 3)
-      ON CONFLICT (url) DO NOTHING;
     `);
 
     // Seed admin user

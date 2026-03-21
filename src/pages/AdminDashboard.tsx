@@ -2280,7 +2280,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">音樂名稱 (內部用)</label>
                     <input 
                       type="text" 
-                      value={editingMusic.name}
+                      value={editingMusic.name || ''}
                       onChange={(e) => setEditingMusic({ ...editingMusic, name: e.target.value })}
                       className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="例如：Little Forest Spirit"
@@ -2290,7 +2290,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">顯示標題</label>
                     <input 
                       type="text" 
-                      value={editingMusic.title}
+                      value={editingMusic.title || ''}
                       onChange={(e) => setEditingMusic({ ...editingMusic, title: e.target.value })}
                       className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="例如：森林冥想"
@@ -2303,7 +2303,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">藝術家 / 來源</label>
                     <input 
                       type="text" 
-                      value={editingMusic.artist}
+                      value={editingMusic.artist || ''}
                       onChange={(e) => setEditingMusic({ ...editingMusic, artist: e.target.value })}
                       className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="例如：Nature Sounds"
@@ -2313,7 +2313,7 @@ export const AdminDashboard: React.FC = () => {
                     <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">分類</label>
                     <input 
                       type="text" 
-                      value={editingMusic.category}
+                      value={editingMusic.category || ''}
                       onChange={(e) => setEditingMusic({ ...editingMusic, category: e.target.value })}
                       className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                       placeholder="例如：meditation"
@@ -2354,7 +2354,7 @@ export const AdminDashboard: React.FC = () => {
                   <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">音檔 URL</label>
                   <input 
                     type="text" 
-                    value={editingMusic.url}
+                    value={editingMusic.url || ''}
                     onChange={(e) => setEditingMusic({ ...editingMusic, url: e.target.value })}
                     className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30"
                     placeholder="https://..."
