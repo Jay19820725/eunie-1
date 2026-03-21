@@ -1304,31 +1304,45 @@ async function startServer() {
 
   app.post("/api/admin/music", async (req, res) => {
     const { id, name, title, artist, category, element, url, is_active, sort_order } = req.body;
-    try {
-      // Ensure sort_order is a number
-      const finalSortOrder = parseInt(sort_order as any) || 0;
-      const finalIsActive = is_active === undefined ? true : is_active;
+    
+    // Basic validation
+    if (!url) {
+      return res.status(400).json({ error: "音檔 URL 是必填的" });
+    }
 
+    // Ensure sort_order is a valid integer
+    const parsedSortOrder = parseInt(sort_order);
+    const safeSortOrder = isNaN(parsedSortOrder) ? 0 : parsedSortOrder;
+
+    try {
       if (id) {
-        await pool.query(
-          "UPDATE music_tracks SET name = $1, title = $2, artist = $3, category = $4, element = $5, url = $6, is_active = $7, sort_order = $8 WHERE id = $9",
-          [name, title, artist, category, element, url, finalIsActive, finalSortOrder, id]
+        const result = await pool.query(
+          "UPDATE music_tracks SET name = $1, title = $2, artist = $3, category = $4, element = $5, url = $6, is_active = $7, sort_order = $8 WHERE id = $9 RETURNING *",
+          [name, title, artist, category, element, url, is_active, safeSortOrder, id]
         );
+        if (result.rowCount === 0) {
+          return res.status(404).json({ error: "找不到該音樂軌道" });
+        }
       } else {
         await pool.query(
           "INSERT INTO music_tracks (name, title, artist, category, element, url, is_active, sort_order) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
-          [name, title, artist, category, element, url, finalIsActive, finalSortOrder]
+          [name, title, artist, category, element, url, is_active, safeSortOrder]
         );
       }
       res.json({ success: true });
     } catch (err: any) {
       console.error("Error saving music track:", err);
-      // Provide more specific error message for unique constraint violation
+      
+      // Handle unique constraint violation for URL
       if (err.code === '23505') {
-        res.status(400).json({ error: "音樂 URL 已存在，請使用不同的 URL" });
-      } else {
-        res.status(500).json({ error: err.message || "Internal server error" });
+        return res.status(400).json({ error: "該音檔 URL 已被其他音樂使用，請檢查是否重複" });
       }
+      
+      res.status(500).json({ 
+        error: "Internal server error", 
+        details: err.message,
+        code: err.code
+      });
     }
   });
 

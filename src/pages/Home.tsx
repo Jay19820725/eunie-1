@@ -181,7 +181,7 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 2, delay: 2 }}
-              className="w-full max-w-2xl px-4 space-y-6"
+              className="w-full max-w-2xl px-4 space-y-6 md:mt-[-50px] md:mb-0"
             >
               <div className="flex items-center justify-between px-2">
                 <span className="text-[9px] tracking-[0.3em] uppercase text-ink/30 font-medium">
@@ -222,7 +222,7 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
           {loopStage === 'calibration' ? (
             <Button 
               onClick={onStartTest}
-              className="group relative overflow-hidden h-16 md:h-20 px-16 md:px-24 rounded-full text-sm md:text-base tracking-[0.5em] bg-ink text-white hover:bg-ink/90 shadow-2xl shadow-ink/10 transition-all duration-700 md:-mt-[30px]"
+              className="group relative overflow-hidden h-16 md:h-20 px-16 md:px-24 rounded-full text-sm md:text-base tracking-[0.5em] bg-ink text-white hover:bg-ink/90 shadow-2xl shadow-ink/10 transition-all duration-700 md:mt-[-40px]"
             >
               <span className="relative z-10 flex items-center gap-4">
                 {t('home_start_btn')}
