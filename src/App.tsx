@@ -225,7 +225,6 @@ function AppContent() {
         onStartTest={() => navigate('test')}
       />
       
-      <LuminaBottle />
       <PurchaseModal 
         isOpen={isPurchaseModalOpen} 
         onClose={() => setIsPurchaseModalOpen(false)}
