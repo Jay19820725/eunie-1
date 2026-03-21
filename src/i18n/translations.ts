@@ -28,6 +28,11 @@ export const translations = {
     dark_mode: "深色模式 (準備中)",
     newsletter: "電子報",
     status_checking: "確認狀態中...",
+    atmosphere_setting: "呼吸效果氛圍",
+    atmosphere_morning: "晨曦 (Morning Glow)",
+    atmosphere_sea: "靜謐深海 (Quiet Sea)",
+    atmosphere_forest: "森林浴 (Forest Bath)",
+    atmosphere_default: "EUNIE 原生",
     
     // Premium Section
     premium_center: "EUNIE 能量中心",
@@ -312,6 +317,11 @@ export const translations = {
     dark_mode: "ダークモード (準備中)",
     newsletter: "ニュースレター",
     status_checking: "ステータスを確認中....",
+    atmosphere_setting: "呼吸エフェクトの雰囲気",
+    atmosphere_morning: "晨曦 (Morning Glow)",
+    atmosphere_sea: "静謐な深海 (Quiet Sea)",
+    atmosphere_forest: "森林浴 (Forest Bath)",
+    atmosphere_default: "EUNIE オリジナル",
     
     // Premium Section
     premium_center: "Premium エネルギーセンター",
