@@ -2,7 +2,7 @@
  * Firebase Storage URL Helper
  */
 
-const FIREBASE_STORAGE_BUCKET = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'yuni-8f439.firebasestorage.app';
+const FIREBASE_STORAGE_BUCKET = (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || 'yuni-8f439.firebasestorage.app';
 const ASSETS_PREFIX = 'eunie-assets';
 
 /**
