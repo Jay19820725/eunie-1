@@ -10,11 +10,7 @@ export const useEnergyTestState = (onComplete: () => void) => {
     setAssociations, 
     generateReport, 
     isDrawing, 
-    isCompleted,
-    setSelectedCards,
-    userPoints,
-    setIsPurchaseModalOpen,
-    setIsConsumptionRitualOpen
+    setSelectedCards 
   } = useTest();
 
   const [drawStage, setDrawStage] = useState<DrawStage>('idle');
@@ -45,13 +41,6 @@ export const useEnergyTestState = (onComplete: () => void) => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [drawStage]);
-
-  // Handle completion from context
-  useEffect(() => {
-    if (isCompleted) {
-      onComplete();
-    }
-  }, [isCompleted, onComplete]);
 
   const handleStartShuffle = () => {
     setDrawStage('shuffling');
@@ -117,11 +106,12 @@ export const useEnergyTestState = (onComplete: () => void) => {
   };
 
   const handleComplete = async () => {
-    if (userPoints < 1) {
-      setIsPurchaseModalOpen(true);
-      return;
+    setIsGenerating(true);
+    const report = await generateReport();
+    setIsGenerating(false);
+    if (report) {
+      onComplete();
     }
-    setIsConsumptionRitualOpen(true);
   };
 
   return {

@@ -25,10 +25,6 @@ interface TestContextType {
   fetchUserPoints: () => Promise<void>;
   isPurchaseModalOpen: boolean;
   setIsPurchaseModalOpen: (isOpen: boolean) => void;
-  isConsumptionRitualOpen: boolean;
-  setIsConsumptionRitualOpen: (isOpen: boolean) => void;
-  totalReportsCount: number;
-  confirmConsumption: () => Promise<void>;
 }
 
 const TestContext = createContext<TestContextType | undefined>(undefined);
@@ -42,8 +38,6 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userPoints, setUserPoints] = useState<number>(0);
   const [isFirstPurchase, setIsFirstPurchase] = useState<boolean>(true);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
-  const [isConsumptionRitualOpen, setIsConsumptionRitualOpen] = useState(false);
-  const [totalReportsCount, setTotalReportsCount] = useState<number>(0);
   const { language } = useLanguage();
 
   const fetchUserPoints = useCallback(async () => {
@@ -54,13 +48,8 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const data = await res.json();
       setUserPoints(data.points || 0);
       setIsFirstPurchase(data.is_first_purchase !== false);
-      
-      // Also fetch total reports count for value reinforcement
-      const reportsRes = await fetch(`/api/reports/${user.uid}`);
-      const reportsData = await reportsRes.json();
-      setTotalReportsCount(reportsData.reports?.length || 0);
     } catch (err) {
-      console.error("Failed to fetch user points or reports:", err);
+      console.error("Failed to fetch user points:", err);
     }
   }, []);
 
@@ -346,11 +335,6 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, [syncPendingReports]);
 
-  const confirmConsumption = useCallback(async () => {
-    setIsConsumptionRitualOpen(false);
-    await generateReport();
-  }, [generateReport]);
-
   return (
     <TestContext.Provider value={{
       selectedCards,
@@ -369,11 +353,7 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isFirstPurchase,
       fetchUserPoints,
       isPurchaseModalOpen,
-      setIsPurchaseModalOpen,
-      isConsumptionRitualOpen,
-      setIsConsumptionRitualOpen,
-      totalReportsCount,
-      confirmConsumption
+      setIsPurchaseModalOpen
     }}>
       {children}
     </TestContext.Provider>

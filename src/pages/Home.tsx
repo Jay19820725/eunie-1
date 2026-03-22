@@ -4,7 +4,6 @@ import { Button } from '../components/ui/Button';
 import { Sparkles, ArrowRight, Activity, Calendar, Zap } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { useTest } from '../store/TestContext';
 import { LoopStage } from '../App';
 
 interface HomeProps {
@@ -70,14 +69,10 @@ const StatusCard = ({ title, value, icon: Icon, delay = 0 }: { title: string; va
 );
 
 export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, streak = 0 }) => {
-  const { userPoints, setIsPurchaseModalOpen } = useTest();
   const { t, language } = useLanguage();
   const { profile } = useAuth();
   const [lastEnergy, setLastEnergy] = useState<string | null>(null);
   const [recentReports, setRecentReports] = useState<any[]>([]);
-
-  const isEnergyEmpty = userPoints < 1;
-  const isEnergyLow = userPoints > 0 && userPoints < 3;
 
   useEffect(() => {
     if (profile?.uid) {
@@ -225,58 +220,30 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
           )}
 
           {loopStage === 'calibration' ? (
-            <div className="flex flex-col items-center gap-6 md:mt-[-40px]">
-              {isEnergyLow && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="px-4 py-2 bg-wood/5 border border-wood/20 rounded-full flex items-center gap-2 text-[10px] text-wood tracking-widest uppercase"
-                >
-                  <Zap size={12} className="animate-pulse" />
-                  {t('warning_low_energy')}
-                </motion.div>
-              )}
-              <Button 
-                onClick={isEnergyEmpty ? () => setIsPurchaseModalOpen(true) : onStartTest}
-                className={`group relative overflow-hidden h-16 md:h-20 px-16 md:px-24 rounded-full text-sm md:text-base tracking-[0.5em] transition-all duration-700 ${
-                  isEnergyEmpty ? 'bg-ink/10 text-ink/40 border-ink/5 shadow-none' : 'bg-ink text-white hover:bg-ink/90 shadow-2xl shadow-ink/10'
-                }`}
-              >
-                <span className="relative z-10 flex items-center gap-4">
-                  {isEnergyEmpty ? t('warning_energy_empty') : t('home_start_btn')}
-                  <ArrowRight size={18} className={`group-hover:translate-x-2 transition-transform duration-700 ${isEnergyEmpty ? 'opacity-20' : ''}`} />
-                </span>
-              </Button>
-            </div>
+            <Button 
+              onClick={onStartTest}
+              className="group relative overflow-hidden h-16 md:h-20 px-16 md:px-24 rounded-full text-sm md:text-base tracking-[0.5em] bg-ink text-white hover:bg-ink/90 shadow-2xl shadow-ink/10 transition-all duration-700 md:mt-[-40px]"
+            >
+              <span className="relative z-10 flex items-center gap-4">
+                {t('home_start_btn')}
+                <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform duration-700" />
+              </span>
+            </Button>
           ) : (
-            <div className="flex flex-col items-center gap-6 md:-mt-[30px]">
-              {isEnergyLow && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="px-4 py-2 bg-wood/5 border border-wood/20 rounded-full flex items-center gap-2 text-[10px] text-wood tracking-widest uppercase"
-                >
-                  <Zap size={12} className="animate-pulse" />
-                  {t('warning_low_energy')}
-                </motion.div>
-              )}
-              <div className="flex flex-wrap justify-center gap-8">
-                <Button 
-                  onClick={() => onNavigate(loopStage === 'resonance' ? 'ocean' : 'history')}
-                  className="h-14 px-10 rounded-full text-[10px] tracking-[0.4em] bg-ink text-white hover:bg-ink/90 shadow-xl shadow-ink/10"
-                >
-                  {t('home_continue_loop')}
-                </Button>
-                <Button 
-                  onClick={isEnergyEmpty ? () => setIsPurchaseModalOpen(true) : onStartTest}
-                  variant="outline"
-                  className={`h-14 px-10 rounded-full text-[10px] tracking-[0.4em] transition-all ${
-                    isEnergyEmpty ? 'bg-ink/5 text-ink/20 border-ink/5' : 'border-ink/10 text-ink/30 hover:text-ink hover:border-ink/20'
-                  }`}
-                >
-                  {isEnergyEmpty ? t('warning_energy_empty') : t('report_new_test')}
-                </Button>
-              </div>
+            <div className="flex flex-wrap justify-center gap-8 md:-mt-[30px]">
+              <Button 
+                onClick={() => onNavigate(loopStage === 'resonance' ? 'ocean' : 'history')}
+                className="h-14 px-10 rounded-full text-[10px] tracking-[0.4em] bg-ink text-white hover:bg-ink/90 shadow-xl shadow-ink/10"
+              >
+                {t('home_continue_loop')}
+              </Button>
+              <Button 
+                onClick={onStartTest}
+                variant="outline"
+                className="h-14 px-10 rounded-full text-[10px] tracking-[0.4em] border-ink/10 text-ink/30 hover:text-ink hover:border-ink/20"
+              >
+                {t('report_new_test')}
+              </Button>
             </div>
           )}
 
