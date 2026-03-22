@@ -1,7 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { SelectedCards, AnalysisReport, FiveElementValues } from "../core/types";
 
-// Initialize AI with the environment variable
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY! });
 
 /**
@@ -14,8 +13,7 @@ export const generateAIAnalysis = async (
   currentLang: 'zh' | 'ja' = 'zh'
 ): Promise<Partial<AnalysisReport>> => {
   const model = "gemini-3.1-pro-preview";
-  
-  // Fetch active prompt from database for the specific language
+
   let promptTemplate = "";
   
   try {
@@ -28,7 +26,6 @@ export const generateAIAnalysis = async (
     console.warn("Failed to fetch active prompt, using fallback:", err);
   }
 
-  // Fallback hardcoded prompt if no prompt found in DB
   if (!promptTemplate) {
     promptTemplate = currentLang === 'ja'
       ? `
@@ -135,11 +132,10 @@ export const generateAIAnalysis = async (
     
     return {
       ...content,
-      lang: currentLang // Store the language tag
+      lang: currentLang
     };
   } catch (error) {
     console.error("AI Analysis failed:", error);
-    // Fallback static content
     return {
       todayTheme: currentLang === 'ja' ? "流れる時の中で、あなたの魂が安らげる場所を見つけましょう。" : "在流動的時光中，為妳的靈魂尋找一處安放的港灣。",
       cardInterpretation: currentLang === 'ja' ? "あなたが選んだカードは、心の奥底にある静かな願いと、優しく包み込まれたいという渴望を映し出しています。" : "妳選取的牌卡映照出妳內心深處靜謐的期盼，以及渴望被溫柔包裹的靈魂。",
