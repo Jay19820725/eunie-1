@@ -257,6 +257,8 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await syncToCloud(finalReport);
         } catch (aiError) {
           console.error("Background AI Analysis failed:", aiError);
+          // Ensure the user isn't stuck in "weaving" state even if AI fails
+          setReport(prev => prev ? { ...prev, isAiComplete: true } : null);
         }
       };
 
@@ -268,7 +270,7 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Report generation failed:", error);
       return null;
     }
-  }, [selectedCards, language]);
+  }, [selectedCards, language, userPoints, fetchUserPoints]);
 
   const syncPendingReports = useCallback(async () => {
     const pendingIds = JSON.parse(localStorage.getItem('eunie_pending_sync') || '[]');

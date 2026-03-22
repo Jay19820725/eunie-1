@@ -177,6 +177,10 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
         )}
       </AnimatePresence>
 
+      <AnimatePresence>
+        {drawStage === 'revealed' && <LuminaBottle />}
+      </AnimatePresence>
+
       <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-end mb-4 md:mb-6 gap-8 md:gap-20 px-4 h-[220.766px] md:h-auto">
         <motion.div 
           key={drawStage}
@@ -428,7 +432,6 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
             </motion.div>
           ) : (
             <>
-              <LuminaBottle />
               <motion.div 
                 key="reveal"
                 variants={containerVariants}

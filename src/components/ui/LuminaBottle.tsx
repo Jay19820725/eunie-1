@@ -14,7 +14,8 @@ export const LuminaBottle: React.FC = () => {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed top-6 right-6 z-[40] flex items-center gap-3"
+      exit={{ opacity: 0, y: 20 }}
+      className="fixed top-4 right-4 md:top-8 md:right-8 z-[40] flex items-center gap-3"
     >
       <div 
         onClick={() => setIsPurchaseModalOpen(true)}
