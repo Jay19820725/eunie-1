@@ -2,6 +2,8 @@ import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { Navigation } from './components/layout/Navigation';
 import { LuminaBottle } from './components/ui/LuminaBottle';
 import { PurchaseModal } from './components/PurchaseModal';
+import { ConsumptionRitualModal } from './components/ConsumptionRitualModal';
+import { NotificationManager } from './components/NotificationManager';
 import { KomorebiBackground } from './components/layout/KomorebiBackground';
 import { ConnectionStatus } from './components/ui/ConnectionStatus';
 import { SEOManager } from './components/SEOManager';
@@ -49,7 +51,15 @@ function AppContent() {
 
   const { profile } = useAuth();
   const { t } = useLanguage();
-  const { isPurchaseModalOpen, setIsPurchaseModalOpen, fetchUserPoints } = useTest();
+  const { 
+    isPurchaseModalOpen, 
+    setIsPurchaseModalOpen, 
+    isConsumptionRitualOpen,
+    setIsConsumptionRitualOpen,
+    confirmConsumption,
+    userPoints,
+    fetchUserPoints 
+  } = useTest();
   const [pendingReport, setPendingReport] = useState<any>(null);
 
   // Fetch daily status and streak
@@ -232,9 +242,17 @@ function AppContent() {
           fetchUserPoints();
         }}
       />
+
+      <ConsumptionRitualModal
+        isOpen={isConsumptionRitualOpen}
+        onClose={() => setIsConsumptionRitualOpen(false)}
+        onConfirm={confirmConsumption}
+        userPoints={userPoints}
+      />
       
       <ConnectionStatus />
       <SoundControl />
+      <NotificationManager />
 
       {/* Return Prompt for Completed AI Analysis */}
       <AnimatePresence>

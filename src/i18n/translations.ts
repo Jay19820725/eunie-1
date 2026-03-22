@@ -158,6 +158,34 @@ export const translations = {
     test_draw_again: "重新抽取",
     test_resensing_energy: "正在重新感應能量...",
     report_revealed_ready: "靈魂訊息已準備就緒",
+    
+    // Pre-consumption (Ritual)
+    ritual_confirm_title: "喚醒深度啟示",
+    ritual_confirm_desc: "投入 1 點靈光，讓 AI 引導師為妳編織專屬的能量圖譜與深度洞察。",
+    ritual_confirm_btn: "投入靈光，開啟對話",
+    ritual_insufficient_points: "靈光能量微弱，建議先進行採集。",
+
+    // Post-consumption (Value Reinforcement)
+    ritual_success_toast: "能量已投入。這是妳第 {count} 次與內在深度對話。",
+    ritual_value_tag: "成長紀錄已收藏",
+
+    // Progress & Achievement
+    profile_soul_level: "靈魂共鳴等級",
+    profile_total_growth: "累積成長能量",
+    profile_level_name: "初醒之光",
+
+    // Scarcity & Warnings
+    warning_low_energy: "能量即將耗盡，建議補充靈光以維持校準。",
+    warning_energy_empty: "能量已枯竭，請採集靈光以開啟深度分析。",
+
+    // Push Notifications (Simulated)
+    push_morning_title: "晨曦校準",
+    push_morning_body: "新的一天開始了，花 3 分鐘為今日的能量定調吧。",
+    push_night_title: "深夜沉澱",
+    push_night_body: "在入睡前，將今日的紛擾化作溫柔的文字紀錄。",
+    push_inactivity_title: "EUNIE 想妳了",
+    push_inactivity_body: "距離上次校準已過 3 天，回來看看妳內在的頻率變化吧。",
+    push_pattern_insight: "發現能量模式！妳最近的「木」能量持續上升，來看看這代表什麼。",
 
     // Energy Report Page
     report_back: "返回",
@@ -447,6 +475,34 @@ export const translations = {
     test_draw_again: "もう一度引く",
     test_resensing_energy: "エネルギーを再感知しています...",
     report_revealed_ready: "魂のメッセージが整いました",
+
+    // Pre-consumption (Ritual)
+    ritual_confirm_title: "深層の啓示を呼び覚ます",
+    ritual_confirm_desc: "1ポイントの霊光を投入し、AIガイドにあなた専用のエネルギー図譜と深い洞察を綴ってもらいましょう。",
+    ritual_confirm_btn: "霊光を投入し、対話を始める",
+    ritual_insufficient_points: "霊光エネルギーが不足しています。まずは採集をお勧めします。",
+
+    // Post-consumption (Value Reinforcement)
+    ritual_success_toast: "エネルギーが投入されました。これはあなたにとって {count} 回目の内なる対話です。",
+    ritual_value_tag: "成長記録が保存されました",
+
+    // Progress & Achievement
+    profile_soul_level: "魂の共鳴レベル",
+    profile_total_growth: "累積成長エネルギー",
+    profile_level_name: "目覚めの光",
+
+    // Scarcity & Warnings
+    warning_low_energy: "エネルギーが残りわずかです。校正を維持するために霊光の補充をお勧めします。",
+    warning_energy_empty: "エネルギーが枯渇しました。深層分析を開始するには霊光を採集してください。",
+
+    // Push Notifications (Simulated)
+    push_morning_title: "晨曦の校正",
+    push_morning_body: "新しい一日が始まりました。3分間で今日のエネルギーを整えましょう。",
+    push_night_title: "深夜の沈殿",
+    push_night_body: "眠りにつく前に、今日の出来事を優しい言葉で記録しましょう。",
+    push_inactivity_title: "EUNIEはあなたを待っています",
+    push_inactivity_body: "最後の校正から3日が経ちました。内なる周波数の変化を確認しに来ませんか？",
+    push_pattern_insight: "エネルギーパターンを発見！最近「木」のエネルギーが上昇しています。その意味を確かめましょう。",
 
     // Energy Report Page
     report_back: "戻る",

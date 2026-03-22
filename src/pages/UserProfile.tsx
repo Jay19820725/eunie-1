@@ -17,7 +17,7 @@ interface UserProfileProps {
 
 export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
   const { user, profile, login, logout, loading, refreshProfile, setProfile, isAdmin, isSubscribed, isPremium } = useAuth();
-  const { userPoints, setIsPurchaseModalOpen } = useTest();
+  const { userPoints, setIsPurchaseModalOpen, totalReportsCount } = useTest();
   const { t, language, setLanguage } = useLanguage();
   const [isUpgrading, setIsUpgrading] = React.useState(false);
   const [isEditing, setIsEditing] = React.useState(false);
@@ -140,12 +140,32 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onNavigate }) => {
                     {isAdmin ? 'Administrator' : 
                      isSubscribed ? 'Premium Member' : 'Free Member'}
                   </span>
+                  
+                  {/* Soul Level Tag */}
+                  <span className="text-[8px] px-2 py-0.5 rounded-full border border-wood/20 text-wood bg-wood/5 uppercase tracking-widest flex items-center gap-1">
+                    <Sparkles size={8} />
+                    {t('profile_soul_level')}: {Math.floor((totalReportsCount || 0) / 5) + 1}
+                  </span>
                 </div>
               ) : user ? (
                 <div className="h-4 w-24 bg-ink/5 animate-pulse rounded-full mx-auto md:mx-0" />
               ) : null}
             </div>
             <p className="text-sm md:text-lg text-ink-muted font-light tracking-widest">{user ? t('energy_resonant') : t('searching_resonance')}</p>
+            
+            {/* Growth Stats */}
+            {user && (
+              <div className="flex gap-8 justify-center md:justify-start pt-2 border-t border-ink/5">
+                <div className="space-y-1">
+                  <span className="text-[9px] uppercase tracking-widest text-ink-muted block">{t('profile_total_growth')}</span>
+                  <span className="text-xl font-serif text-ink">{(totalReportsCount || 0) * 10} <span className="text-[10px] text-ink-muted">EXP</span></span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[9px] uppercase tracking-widest text-ink-muted block">{t('profile_level_name')}</span>
+                  <span className="text-xl font-serif text-ink">{t('profile_level_name')}</span>
+                </div>
+              </div>
+            )}
             
             {/* Points & Subscription Card */}
             {user && (

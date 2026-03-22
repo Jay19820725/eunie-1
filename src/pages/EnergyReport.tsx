@@ -34,7 +34,7 @@ export const EnergyReport: React.FC<{
   onNavigate: (page: string) => void;
   loopStage: string;
 }> = ({ onReset, onNavigate, loopStage }) => {
-  const { selectedCards } = useTest();
+  const { selectedCards, totalReportsCount } = useTest();
   const { t } = useLanguage();
   const reportRef = useRef<HTMLDivElement>(null);
   const {
@@ -133,6 +133,23 @@ export const EnergyReport: React.FC<{
             className="flex-1"
           >
             <span className="text-[14px] md:text-[10px] uppercase tracking-[0.8em] text-ink-muted mb-4 md:mb-6 block">{t('report_subtitle')}</span>
+            
+            {/* Value Reinforcement: Nth Dialogue */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.8 }}
+              className="flex items-center gap-2 mb-6"
+            >
+              <div className="px-3 py-1 bg-wood/10 text-wood text-[10px] tracking-widest uppercase rounded-full border border-wood/20 flex items-center gap-1.5">
+                <Sparkles size={10} />
+                {t('ritual_success_toast').replace('{count}', String(totalReportsCount || 1))}
+              </div>
+              <div className="px-3 py-1 bg-ink/5 text-ink-muted text-[10px] tracking-widest uppercase rounded-full border border-ink/10">
+                {t('ritual_value_tag')}
+              </div>
+            </motion.div>
+
             <h1 className="text-[38px] md:text-[60px] font-serif italic font-extralight tracking-tighter-massive leading-[60.533px] md:leading-[111.533px] text-ink mb-8 text-left">
               {displayContent.todayTheme || (
                 <PoeticLoading 
