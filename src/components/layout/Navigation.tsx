@@ -132,7 +132,9 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
                       onNavigate(item.path);
                       resetCollapseTimer();
                     }}
-                    className={`relative flex items-center gap-2 transition-all duration-500 px-3 md:px-4 py-2 rounded-full ${
+                    aria-label={item.label}
+                    title={item.label}
+                    className={`relative flex items-center gap-2 transition-all duration-500 px-3 md:px-4 py-2 rounded-full focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:outline-none ${
                       isActive 
                         ? 'text-ink' 
                         : 'text-ink/30 hover:text-ink/60'
@@ -181,7 +183,9 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
                   lastManualToggleRef.current = Date.now();
                   setIsExpanded(false);
                 }}
-                className="ml-2 p-2 text-ink/20 hover:text-ink/40 transition-colors border-l border-ink/5"
+                aria-label="Collapse navigation"
+                title="Collapse"
+                className="ml-2 p-2 text-ink/20 hover:text-ink/40 transition-colors border-l border-ink/5 focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:outline-none rounded-full"
               >
                 <X size={14} />
               </button>
@@ -198,7 +202,9 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
                 lastManualToggleRef.current = Date.now();
                 setIsExpanded(true);
               }}
-              className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 ${
+              aria-label="Expand navigation"
+              title="Expand"
+              className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 focus-visible:ring-2 focus-visible:ring-ink/20 focus-visible:outline-none ${
                 isPremium 
                   ? 'bg-emerald-50 border border-emerald-500/30' 
                   : 'bg-white border border-white/20 backdrop-blur-md'
