@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'motion/react';
 import { 
   Radar, 
@@ -17,19 +17,24 @@ interface EnergyProfileProps {
 export const EnergyProfile: React.FC<EnergyProfileProps> = ({ report }) => {
   const { t } = useLanguage();
 
-  const elements = [
+  // ⚡ Bolt Performance Optimization:
+  // Memoize the elements and chartData arrays to prevent unnecessary re-creations on every render.
+  // This avoids passing new array references to the Recharts RadarChart component,
+  // preventing expensive re-renders of the chart when the parent component updates.
+  // Expected impact: Reduces unnecessary chart re-renders and improves responsiveness on profile page.
+  const elements = useMemo(() => [
     { key: FiveElement.WOOD, label: t('home_element_wood'), color: 'bg-wood', hex: '#A8C97F' },
     { key: FiveElement.FIRE, label: t('home_element_fire'), color: 'bg-fire', hex: '#E95464' },
     { key: FiveElement.EARTH, label: t('home_element_earth'), color: 'bg-earth', hex: '#FFB11B' },
     { key: FiveElement.METAL, label: t('home_element_metal'), color: 'bg-metal', hex: '#F8FBF8' },
     { key: FiveElement.WATER, label: t('home_element_water'), color: 'bg-water', hex: '#33A6B8' },
-  ];
+  ], [t]);
 
-  const chartData = elements.map(el => ({
+  const chartData = useMemo(() => elements.map(el => ({
     subject: el.label,
     value: report.totalScores[el.key],
     fullMark: 100,
-  }));
+  })), [elements, report.totalScores]);
 
   const translateElement = (el: string) => {
     const normalizedEl = (el || '').toLowerCase();
