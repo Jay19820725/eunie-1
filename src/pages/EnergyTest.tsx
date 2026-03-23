@@ -7,6 +7,7 @@ import { Sparkles, ArrowRight, Maximize2, RefreshCw } from 'lucide-react';
 import { ShuffleAnimation } from '../components/ShuffleAnimation';
 import { EunieCard } from '../components/EunieCard';
 import { CardZoomModal } from '../components/CardZoomModal';
+import { PreConsumptionModal } from '../components/PreConsumptionModal';
 import { useLanguage } from '../i18n/LanguageContext';
 import { preloadDecks } from '../services/cardEngine';
 import { PairingStage } from '../components/test/PairingStage';
@@ -65,6 +66,8 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
     isReshuffling,
     allImagesFlipped,
     allWordsFlipped,
+    isPreConsumptionModalOpen,
+    setIsPreConsumptionModalOpen,
   } = useEnergyTestState(onComplete);
 
   useEffect(() => {
@@ -483,7 +486,7 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
 
               <div className="flex flex-col items-center gap-8 pt-12">
                 <Button 
-                  onClick={handleComplete}
+                  onClick={() => setIsPreConsumptionModalOpen(true)}
                   className="h-16 px-16 gap-3 shadow-xl shadow-wood/10"
                 >
                   {t('test_revealed_view_report')} <Sparkles size={18} />
@@ -507,6 +510,15 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
       <CardZoomModal 
         card={zoomedCard} 
         onClose={() => setZoomedCard(null)} 
+      />
+
+      <PreConsumptionModal
+        isOpen={isPreConsumptionModalOpen}
+        onClose={() => setIsPreConsumptionModalOpen(false)}
+        onConfirm={() => {
+          setIsPreConsumptionModalOpen(false);
+          handleComplete();
+        }}
       />
     </div>
   );

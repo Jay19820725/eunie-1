@@ -277,6 +277,35 @@ export const translations = {
     ocean_saved_reply_label: "妳的共鳴筆記",
     ocean_save_limit_error: "收藏數量已達上限 (20 封)",
 
+    // Revenue & Points
+    points_low_title: "靈光能量微弱",
+    points_low_body: "您的靈光即將耗盡，建議提前採集以維持能量校準。",
+    points_empty_title: "能量已耗盡",
+    points_empty_body: "目前的靈光不足以開啟深度報告，請前往採集。",
+    points_pre_consume_hint: "開啟這份深度報告將消耗 1 點靈光，準備好開始了嗎？",
+    points_remaining: "剩餘靈光",
+    points_scarcity_hint: "您的能量僅能支撐最後 {count} 次探索",
+
+    // Progress & Achievement
+    milestone_streak_title: "持續共鳴中",
+    milestone_streak_body: "妳已連續 {count} 天與內在對話，這份堅持正讓妳變得更強大。",
+    milestone_reports_title: "能量地圖擴張",
+    milestone_reports_body: "妳已累積了 {count} 份能量紀錄，這將成為妳寶貴的靈魂數據。",
+
+    // Re-engagement & Emotional Hooks
+    reengage_morning_title: "早安，今天的頻率是？",
+    reengage_morning_body: "在晨曦中，花三分鐘為自己進行能量校準吧。",
+    reengage_night_title: "深夜的沈澱時間",
+    reengage_night_body: "忙碌了一天，透過卡片聽聽內在被忽略的聲音。",
+    reengage_anxious_title: "感到心浮氣躁嗎？",
+    reengage_anxious_body: "停下腳步，讓卡片的隱喻為妳帶來平靜的視角。",
+
+    // System & Growth
+    sys_error_title: "能量流動受阻",
+    sys_error_body: "目前的連線有些不穩定，請稍後再試。",
+    growth_next_step_title: "下一步建議",
+    growth_next_step_body: "妳的能量趨於平衡，要不要去海洋分享這份喜悅？",
+
     // Milestone 4: Ocean Resonance
     ocean_resonance_success_title: "靈魂共鳴已完成",
     ocean_resonance_success_desc: "妳的能量已在海洋中迴盪。要不要將此刻的感受，記錄在內在沈澱（日誌）中？",
@@ -566,6 +595,35 @@ export const translations = {
     ocean_reply_placeholder: "あなたの共鳴を書いてください...",
     ocean_saved_reply_label: "あなたの共鳴ノート",
     ocean_save_limit_error: "コレクションの上限（20通）に達しました",
+
+    // Revenue & Points
+    points_low_title: "霊光エネルギーが低下しています",
+    points_low_body: "霊光がまもなく枯渇します。安定した校正のために、早めの採集をお勧めします。",
+    points_empty_title: "エネルギーが枯渇しました",
+    points_empty_body: "現在の霊光では詳細レポートを開くことができません。採集へ進んでください。",
+    points_pre_consume_hint: "この詳細レポートを開くには1ポイントの霊光を消費します。準備はよろしいですか？",
+    points_remaining: "残り霊光",
+    points_scarcity_hint: "あなたのエネルギーは残り {count} 回の探索分です",
+
+    // Progress & Achievement
+    milestone_streak_title: "共鳴が続いています",
+    milestone_streak_body: "{count} 日連続で内なる対話を行っています。その継続があなたをより強くしています。",
+    milestone_reports_title: "エネルギー地図の拡大",
+    milestone_reports_body: "{count} 件のエネルギー記録が蓄積されました。これは貴重な魂のデータとなります。",
+
+    // Re-engagement & Emotional Hooks
+    reengage_morning_title: "おはようございます、今日の周波数は？",
+    reengage_morning_body: "朝日の中で、3分間のエネルギー校正を行ってみませんか。",
+    reengage_night_title: "深夜の沈殿時間",
+    reengage_night_body: "忙しい一日を終え、カードを通じて内なる声に耳を傾けてみましょう。",
+    reengage_anxious_title: "心がざわついていませんか？",
+    reengage_anxious_body: "立ち止まって、カードのメタファーから穏やかな視点を受け取りましょう。",
+
+    // System & Growth
+    sys_error_title: "エネルギーの流れが妨げられています",
+    sys_error_body: "接続が不安定です。時間をおいてもう一度お試しください。",
+    growth_next_step_title: "次のステップの提案",
+    growth_next_step_body: "エネルギーが整ってきました。この喜びを海で分かち合ってみませんか？",
 
     // Milestone 4: Ocean Resonance
     ocean_resonance_success_title: "魂の共鳴が完了しました",

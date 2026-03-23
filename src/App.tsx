@@ -1,6 +1,7 @@
 import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { Navigation } from './components/layout/Navigation';
 import { LuminaBottle } from './components/ui/LuminaBottle';
+import { EnergyStatus } from './components/ui/EnergyStatus';
 import { PurchaseModal } from './components/PurchaseModal';
 import { KomorebiBackground } from './components/layout/KomorebiBackground';
 import { ConnectionStatus } from './components/ui/ConnectionStatus';
@@ -8,7 +9,7 @@ import { SEOManager } from './components/SEOManager';
 import { AnimatePresence, motion } from 'motion/react';
 import { Sparkles, X, ArrowRight } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
-import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { useLanguage } from './i18n/LanguageContext';
 import { SoundscapeProvider } from './store/SoundscapeContext';
 import { TestProvider, useTest } from './store/TestContext';
 import { SoundControl } from './components/layout/SoundControl';
@@ -203,6 +204,7 @@ function AppContent() {
     <div className="relative min-h-screen selection:bg-wood/10 overflow-x-hidden">
       <SEOManager />
       <KomorebiBackground />
+      <EnergyStatus />
       
       <Suspense fallback={<SanctuaryLoader />}>
         <AnimatePresence mode="wait">
@@ -290,10 +292,13 @@ function AppContent() {
   );
 }
 
+import { NotificationManager } from './components/NotificationManager';
+
 export default function App() {
   return (
     <SoundscapeProvider>
       <AppContent />
+      <NotificationManager />
     </SoundscapeProvider>
   );
 }
