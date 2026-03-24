@@ -2169,10 +2169,17 @@ async function initializeDatabase(pool: pg.Pool) {
         }
       ];
 
-      for (const p of defaultPrompts) {
+      if (defaultPrompts.length > 0) {
+        const values: any[] = [];
+        const placeholders = defaultPrompts.map((p, i) => {
+          const offset = i * 6;
+          values.push(p.module_name, p.content_zh, p.content_ja, p.category, p.status, p.version);
+          return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6})`;
+        }).join(", ");
+
         await pool.query(
-          "INSERT INTO ai_prompts (module_name, content_zh, content_ja, category, status, version) VALUES ($1, $2, $3, $4, $5, $6)",
-          [p.module_name, p.content_zh, p.content_ja, p.category, p.status, p.version]
+          `INSERT INTO ai_prompts (module_name, content_zh, content_ja, category, status, version) VALUES ${placeholders}`,
+          values
         );
       }
       console.log("Default AI prompts seeded.");
