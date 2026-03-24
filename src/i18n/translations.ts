@@ -68,6 +68,7 @@ export const translations = {
     ocean_go_to_test: "前往測試",
     login_required_to_cast: "請先登入後再製作瓶中信。",
     ocean_cast_limit: "字數限制：{count}/100",
+    ocean_no_bottles: "目前海洋很平靜，暫時沒有新的訊息了。",
     
     // Home Page
     home_top_slogan: "EUNIE 嶼妳 — 懂妳的能量，平衡妳的生活",
@@ -362,6 +363,7 @@ export const translations = {
     ocean_go_to_test: "診断へ行く",
     login_required_to_cast: "瓶中信を作るにはログインが必要です。",
     ocean_cast_limit: "文字数制限：{count}/100",
+    ocean_no_bottles: "現在、海は穏やかです。新しいメッセージはまだありません。",
 
     // Home Page
     home_top_slogan: "EUNIE 嶼妳 — あなたのエネルギーを知り、生活を整える",

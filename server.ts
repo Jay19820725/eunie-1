@@ -927,7 +927,12 @@ async function startServer() {
   app.get("/api/bottles/random", async (req, res) => {
     const { userId, targetLang } = req.query;
     try {
-      // Pick a random bottle that is active, not from the current user, and within 30 days
+      // Pick a random bottle that is:
+      // 1. Active
+      // 2. Not from the current user
+      // 3. Within 30 days
+      // 4. NOT already saved by the current user
+      // 5. NOT already blessed by the current user
       const result = await pool.query(
         `SELECT b.*, 
                 COALESCE(b.sender_nickname, u.display_name) as sender_name,
@@ -943,6 +948,11 @@ async function startServer() {
          WHERE b.is_active = TRUE 
            AND b.user_id != $1 
            AND b.created_at > NOW() - INTERVAL '30 days'
+           AND b.id NOT IN (
+             SELECT bottle_id FROM saved_bottles WHERE user_id = $1
+             UNION
+             SELECT bottle_id FROM bottle_blessings WHERE user_id = $1
+           )
          ORDER BY RANDOM() LIMIT 1`,
         [userId || '']
       );

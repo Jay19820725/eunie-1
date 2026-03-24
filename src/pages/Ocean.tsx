@@ -254,7 +254,7 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
         }
       } else {
         // No bottles found or error
-        alert(t('ocean.no_bottles') || 'Ocean is calm today...');
+        alert(t('ocean_no_bottles'));
       }
     } catch (err) {
       console.error(err);
