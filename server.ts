@@ -228,7 +228,7 @@ async function startServer() {
           photoURL, 
           role || 'free_member', 
           subscription_status || 'none',
-          points !== undefined ? points : 0,
+          points !== undefined ? points : 1,
           subscription_tier || 'none',
           is_first_purchase !== undefined ? is_first_purchase : true
         ]

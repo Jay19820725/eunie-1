@@ -287,6 +287,11 @@ export const translations = {
     loop_completion_title: "今日能量閉環已達成",
     loop_completion_desc: "校準、共鳴、沈澱。妳在今日完成了與自己、與世界的溫柔連結。帶著這份平靜的能量，祝妳好夢。",
     loop_completion_btn: "度過了美好的一天",
+    
+    // Auth Prompt
+    auth_prompt_title: "開啟靈魂之旅",
+    auth_prompt_desc: "為了保存您的能量報告並開啟每日成長追蹤，請先登入您的專屬空間。",
+    auth_prompt_login_btn: "開啟靈魂之旅 (Google 登入)",
   },
   ja: {
     // General
@@ -577,6 +582,11 @@ export const translations = {
     loop_completion_title: "今日のエネルギー閉環が完了しました",
     loop_completion_desc: "校準、共鳴、そして沈殿。あなたは今日、自分自身と世界との美しい調和を成し遂げました。この穏やかなエネルギーを抱いて、良い夢を。",
     loop_completion_btn: "素晴らしい一日でした",
+    
+    // Auth Prompt
+    auth_prompt_title: "魂の旅を始める",
+    auth_prompt_desc: "エネルギーレポートを保存し、日々の成長を追蹤するために、まずは専用スペースにサインインしてください。",
+    auth_prompt_login_btn: "魂の旅を始める (Googleでサインイン)",
   }
 };
 

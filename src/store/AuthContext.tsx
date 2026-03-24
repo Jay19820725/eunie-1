@@ -104,6 +104,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await signOut(auth);
       setUser(null);
       setProfile(null);
+      
+      // Clear user-specific localStorage data
+      localStorage.removeItem('eunie_report_history');
+      localStorage.removeItem('eunie_pending_sync');
+      localStorage.removeItem('lastSeenReportId');
+      localStorage.removeItem('lastLoopStage');
+      
     } catch (error) {
       console.error("AuthContext: Logout failed:", error);
     }
