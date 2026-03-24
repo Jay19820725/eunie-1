@@ -110,6 +110,8 @@
         "content": { "type": "string" },
         "element": { "type": "string" },
         "energy_color_tag": { "type": "string", "description": "Energy color associated with the bottle" },
+        "report_id": { "type": "integer", "description": "Unique report ID per bottle" },
+        "translated_content": { "type": "string", "description": "Cached translation" },
         "hug_count": { "type": "integer", "description": "Number of energy hugs received" },
         "lang": { "type": "string" },
         "is_active": { "type": "boolean" },

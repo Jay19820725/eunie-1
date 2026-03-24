@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, AlertCircle, ChevronRight, ChevronLeft, Check } from 'lucide-react';
+import { X, Send, AlertCircle, ChevronRight, ChevronLeft, Check, Clock } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
@@ -134,6 +134,12 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
         if (data.code === 'SENSITIVE_CONTENT') {
           throw new Error(t('ocean_cast_error_sensitive'));
         }
+        if (data.code === 'AI_MODERATION_FAILED') {
+          throw new Error(data.error || (language === 'zh' ? '內容似乎帶有較強的負面能量，請試著平復心情後再試。' : '内容に強い否定的なエネルギーが含まれているようです。心を落ち着かせてからもう一度お試しください。'));
+        }
+        if (data.code === 'REPORT_ALREADY_USED') {
+          throw new Error(data.error || (language === 'zh' ? '此份能量報告已經投擲過瓶中信了。' : 'このエネルギーレポートはすでに瓶中信に使用されています。'));
+        }
         throw new Error(data.error || 'Failed to cast bottle');
       }
 
@@ -212,9 +218,9 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
       return (
         <div className="space-y-6">
           <div className="max-h-[400px] overflow-y-auto pr-2 space-y-3 no-scrollbar">
-            {reports.map((report) => (
+            {reports.map((report, idx) => (
               <button
-                key={report.id}
+                key={`report-${report.id}-${idx}`}
                 onClick={() => {
                   setSelectedReport(report);
                   const langKey = language === 'ja' ? 'ja-JP' : 'zh-TW';
@@ -405,11 +411,21 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
                     {getStepTitle()}
                   </h2>
                   {step === 'write' && (
-                    <p className="text-sm text-ink/40 leading-relaxed">
-                      {language === 'zh' 
-                        ? '將妳此刻的感悟或祝福化作文字，讓它在瓶中信之海中尋找有緣的靈魂。' 
-                        : '今のあなたの気づきや祝福を言葉にして、瓶中信の海で縁のある魂を探しましょう。'}
-                    </p>
+                    <div className="space-y-3">
+                      <p className="text-sm text-ink/40 leading-relaxed">
+                        {language === 'zh' 
+                          ? '將妳此刻的感悟或祝福化作文字，讓它在瓶中信之海中尋找有緣的靈魂。' 
+                          : '今のあなたの気づきや祝福を言葉にして、瓶中信の海で縁のある魂を探しましょう。'}
+                      </p>
+                      <div className="flex items-center gap-2 text-[10px] text-amber-600/60 bg-amber-50/50 px-3 py-2 rounded-lg border border-amber-100/50">
+                        <Clock size={12} />
+                        <span className="tracking-wider uppercase">
+                          {language === 'zh' 
+                            ? '此瓶中信將在海洋中漂流 30 天，隨後沉入深海記憶。' 
+                            : 'この瓶中信は30日間海を漂い、その後深海の記憶に沈みます。'}
+                        </span>
+                      </div>
+                    </div>
                   )}
                 </div>
                 <button

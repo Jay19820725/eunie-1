@@ -835,6 +835,17 @@ async function startServer() {
         return res.status(403).json({ error: "You must complete at least one energy test to create a bottle mail." });
       }
 
+      // 1.1 Check if this report has already been used for a bottle
+      if (reportId) {
+        const existingBottle = await pool.query("SELECT id FROM bottles WHERE report_id = $1", [reportId]);
+        if (existingBottle.rows.length > 0) {
+          return res.status(400).json({ 
+            error: "This energy report has already been used to cast a bottle.",
+            code: "REPORT_ALREADY_USED"
+          });
+        }
+      }
+
       // 2. Check Premium Status
       const userResult = await pool.query("SELECT role, subscription_status FROM users WHERE uid = $1", [userId]);
       if (userResult.rows.length === 0) {
@@ -865,6 +876,34 @@ async function startServer() {
         }
       }
 
+      // 4.1 AI Content Moderation (Gemini)
+      if (process.env.GEMINI_API_KEY) {
+        try {
+          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+          const model = "gemini-3-flash-preview";
+          const moderationPrompt = `You are a content moderator for a meditation and emotional resonance app. 
+          Analyze the following message for hate speech, extreme negativity, harassment, or inappropriate content.
+          Respond ONLY with "PASS" if the content is safe and warm, or "FAIL" if it is inappropriate.
+          Message: ${content}`;
+          
+          const moderationResponse = await ai.models.generateContent({
+            model,
+            contents: [{ parts: [{ text: moderationPrompt }] }]
+          });
+          
+          const result = moderationResponse.text?.trim().toUpperCase();
+          if (result === "FAIL") {
+            return res.status(400).json({ 
+              error: "The ocean currents are too turbulent for this message right now. Please try to calm your heart and try again.", 
+              code: "AI_MODERATION_FAILED" 
+            });
+          }
+        } catch (aiErr) {
+          console.error("AI Moderation error:", aiErr);
+          // If AI fails, we fall back to the manual sensitive word filter (already passed)
+        }
+      }
+
       // 5. Save Bottle
       const { energyColorTag } = req.body;
       const result = await pool.query(
@@ -873,8 +912,14 @@ async function startServer() {
       );
       
       res.json(result.rows[0]);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error casting bottle:", err);
+      if (err.code === '23505' && err.detail?.includes('report_id')) {
+        return res.status(400).json({ 
+          error: "This energy report has already been cast into the ocean.", 
+          code: "REPORT_ALREADY_USED" 
+        });
+      }
       res.status(500).json({ error: "Internal server error" });
     }
   });
@@ -882,7 +927,7 @@ async function startServer() {
   app.get("/api/bottles/random", async (req, res) => {
     const { userId, targetLang } = req.query;
     try {
-      // Pick a random bottle that is active and not from the current user
+      // Pick a random bottle that is active, not from the current user, and within 30 days
       const result = await pool.query(
         `SELECT b.*, 
                 COALESCE(b.sender_nickname, u.display_name) as sender_name,
@@ -895,7 +940,9 @@ async function startServer() {
          LEFT JOIN cards_image ci ON b.card_id = ci.id
          LEFT JOIN cards_word cw ON b.card_id = cw.id
          LEFT JOIN energy_reports er ON b.report_id = er.id
-         WHERE b.is_active = TRUE AND b.user_id != $1 
+         WHERE b.is_active = TRUE 
+           AND b.user_id != $1 
+           AND b.created_at > NOW() - INTERVAL '30 days'
          ORDER BY RANDOM() LIMIT 1`,
         [userId || '']
       );
@@ -911,29 +958,55 @@ async function startServer() {
         console.error("Error incrementing bottle view count:", err);
       });
       
-      // Translation logic using Gemini
-      if (targetLang && bottle.lang !== targetLang && process.env.GEMINI_API_KEY) {
-        try {
-          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-          const model = "gemini-3-flash-preview";
-          const prompt = `Translate the following message from ${bottle.lang} to ${targetLang}. Only return the translated text.
-          Message: ${bottle.content}`;
-          
-          const aiResponse = await ai.models.generateContent({
-            model,
-            contents: [{ parts: [{ text: prompt }] }]
-          });
-          
-          bottle.translatedContent = aiResponse.text;
-        } catch (aiErr) {
-          console.error("AI Translation error:", aiErr);
-          // Fallback: don't include translatedContent if AI fails
-        }
-      }
-      
       res.json(bottle);
     } catch (err) {
       console.error("Error picking up bottle:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/bottles/:id/translate", async (req, res) => {
+    const { id } = req.params;
+    const { targetLang } = req.body;
+    
+    try {
+      // 1. Check cache first
+      const bottleResult = await pool.query("SELECT content, lang, translated_content FROM bottles WHERE id = $1", [id]);
+      if (bottleResult.rows.length === 0) {
+        return res.status(404).json({ error: "Bottle not found" });
+      }
+      
+      const bottle = bottleResult.rows[0];
+      
+      // If already translated and cached (simple cache for now)
+      if (bottle.translated_content) {
+        return res.json({ translatedContent: bottle.translated_content });
+      }
+      
+      // 2. Call Gemini for translation
+      if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Translation service unavailable" });
+      }
+      
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const model = "gemini-3-flash-preview";
+      const prompt = `Translate the following message from ${bottle.lang} to ${targetLang}. 
+      The tone should match the original emotional resonance. Only return the translated text.
+      Message: ${bottle.content}`;
+      
+      const aiResponse = await ai.models.generateContent({
+        model,
+        contents: [{ parts: [{ text: prompt }] }]
+      });
+      
+      const translatedContent = aiResponse.text;
+      
+      // 3. Cache the result
+      await pool.query("UPDATE bottles SET translated_content = $1 WHERE id = $2", [translatedContent, id]);
+      
+      res.json({ translatedContent });
+    } catch (err) {
+      console.error("Error translating bottle:", err);
       res.status(500).json({ error: "Internal server error" });
     }
   });
@@ -1039,6 +1112,29 @@ async function startServer() {
     const { id } = req.params;
     const { userId, replyMessage } = req.body;
     try {
+      // Check 48h cooldown for replies between this user and this bottle
+      if (replyMessage && replyMessage.trim()) {
+        const lastReply = await pool.query(
+          "SELECT created_at FROM bottle_replies WHERE bottle_id = $1 AND sender_id = $2 ORDER BY created_at DESC LIMIT 1",
+          [id, userId]
+        );
+        
+        if (lastReply.rows.length > 0) {
+          const lastTime = new Date(lastReply.rows[0].created_at).getTime();
+          const now = new Date().getTime();
+          const diffHours = (now - lastTime) / (1000 * 60 * 60);
+          
+          if (diffHours < 48) {
+            const remainingHours = Math.ceil(48 - diffHours);
+            return res.status(429).json({ 
+              error: `The ocean currents are still carrying your previous message. Please wait ${remainingHours} more hours.`,
+              code: "REPLY_COOLDOWN",
+              remainingHours
+            });
+          }
+        }
+      }
+
       // Check limit (20)
       const countResult = await pool.query("SELECT COUNT(*) FROM saved_bottles WHERE user_id = $1", [userId]);
       if (parseInt(countResult.rows[0].count) >= 20) {
@@ -1909,7 +2005,15 @@ async function initializeDatabase(pool: pg.Pool) {
       ALTER TABLE bottles ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0;
       ALTER TABLE bottles ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
       ALTER TABLE bottles ADD COLUMN IF NOT EXISTS energy_color_tag TEXT;
+      ALTER TABLE bottles ADD COLUMN IF NOT EXISTS translated_content TEXT;
     `);
+
+    // Ensure UNIQUE constraint on report_id for bottles (one bottle per report)
+    try {
+      await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_bottles_report_id_unique ON bottles(report_id) WHERE report_id IS NOT NULL`);
+    } catch (e) {
+      console.error("Error creating unique index on report_id:", e);
+    }
 
     // Bottle Tags table
     await pool.query(`
