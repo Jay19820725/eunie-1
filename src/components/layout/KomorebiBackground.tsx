@@ -1,22 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
-import { getStoredAtmosphere, Atmosphere } from '../../core/atmospheres';
 
 export const KomorebiBackground: React.FC = () => {
-  const [atmosphere, setAtmosphere] = useState<Atmosphere>(getStoredAtmosphere());
-
-  useEffect(() => {
-    const handleAtmosphereChange = (e: any) => {
-      const newAtm = getStoredAtmosphere();
-      setAtmosphere(newAtm);
-    };
-
-    window.addEventListener('atmosphere-changed', handleAtmosphereChange);
-    return () => window.removeEventListener('atmosphere-changed', handleAtmosphereChange);
-  }, []);
-
-  const colors = atmosphere.colors;
-
   return (
     <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none bg-[#FDFCF8]">
       {/* GPU Accelerated layers of soft light */}
@@ -32,8 +17,7 @@ export const KomorebiBackground: React.FC = () => {
           repeat: Infinity,
           ease: "easeInOut"
         }}
-        className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] rounded-full blur-[100px] md:blur-[200px] transition-colors duration-[3000ms]" 
-        style={{ backgroundColor: `${colors[0]}15` }} // 15 is hex for ~8% opacity
+        className="absolute top-[-20%] left-[-10%] w-[80%] h-[80%] bg-wood/5 rounded-full blur-[100px] md:blur-[200px]" 
       />
       <motion.div 
         animate={{
@@ -48,8 +32,7 @@ export const KomorebiBackground: React.FC = () => {
           ease: "easeInOut",
           delay: -5
         }}
-        className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] rounded-full blur-[90px] md:blur-[180px] transition-colors duration-[3000ms]" 
-        style={{ backgroundColor: `${colors[1]}15` }}
+        className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-fire/5 rounded-full blur-[90px] md:blur-[180px]" 
       />
       <motion.div 
         animate={{
@@ -63,8 +46,7 @@ export const KomorebiBackground: React.FC = () => {
           ease: "easeInOut",
           delay: -10
         }}
-        className="absolute top-[30%] right-[15%] w-[60%] h-[60%] rounded-full blur-[80px] md:blur-[160px] transition-colors duration-[3000ms]" 
-        style={{ backgroundColor: `${colors[2]}15` }}
+        className="absolute top-[30%] right-[15%] w-[60%] h-[60%] bg-water/5 rounded-full blur-[80px] md:blur-[160px]" 
       />
       <motion.div 
         animate={{
@@ -78,8 +60,7 @@ export const KomorebiBackground: React.FC = () => {
           ease: "easeInOut",
           delay: -15
         }}
-        className="absolute bottom-[20%] left-[10%] w-[55%] h-[55%] rounded-full blur-[70px] md:blur-[140px] transition-colors duration-[3000ms]" 
-        style={{ backgroundColor: `${colors[3]}15` }}
+        className="absolute bottom-[20%] left-[10%] w-[55%] h-[55%] bg-earth/5 rounded-full blur-[70px] md:blur-[140px]" 
       />
       
       {/* Pulsing light cores */}

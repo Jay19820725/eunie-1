@@ -5,6 +5,7 @@ import { Sparkles, ArrowRight, Activity, Calendar, Zap } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
 import { LoopStage } from '../App';
+import { AuthPromptModal } from '../components/AuthPromptModal';
 
 interface HomeProps {
   onStartTest: () => void;
@@ -69,10 +70,24 @@ const StatusCard = ({ title, value, icon: Icon, delay = 0 }: { title: string; va
 );
 
 export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, streak = 0 }) => {
+  const { profile, login } = useAuth();
   const { t, language } = useLanguage();
-  const { profile } = useAuth();
   const [lastEnergy, setLastEnergy] = useState<string | null>(null);
   const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
+
+  const handleStartTest = () => {
+    if (!profile?.uid) {
+      setIsAuthPromptOpen(true);
+      return;
+    }
+    onStartTest();
+  };
+
+  const handleAuthSuccess = () => {
+    // After successful login, automatically start the test
+    onStartTest();
+  };
 
   useEffect(() => {
     if (profile?.uid) {
@@ -221,7 +236,7 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
 
           {loopStage === 'calibration' ? (
             <Button 
-              onClick={onStartTest}
+              onClick={handleStartTest}
               className="group relative overflow-hidden h-16 md:h-20 px-16 md:px-24 rounded-full text-sm md:text-base tracking-[0.5em] bg-ink text-white hover:bg-ink/90 shadow-2xl shadow-ink/10 transition-all duration-700 md:mt-[-40px]"
             >
               <span className="relative z-10 flex items-center gap-4">
@@ -238,7 +253,7 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
                 {t('home_continue_loop')}
               </Button>
               <Button 
-                onClick={onStartTest}
+                onClick={handleStartTest}
                 variant="outline"
                 className="h-14 px-10 rounded-full text-[10px] tracking-[0.4em] border-ink/10 text-ink/30 hover:text-ink hover:border-ink/20"
               >
@@ -271,6 +286,12 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
           </div>
         </motion.div>
       </div>
+
+      <AuthPromptModal 
+        isOpen={isAuthPromptOpen} 
+        onClose={() => setIsAuthPromptOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
 
       {/* Background Breathing Hint */}
       <motion.div

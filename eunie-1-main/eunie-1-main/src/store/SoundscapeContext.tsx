@@ -35,6 +35,9 @@ export const SoundscapeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const [volume, setVolume] = useState(0.5);
   const [playbackMode, setPlaybackMode] = useState<PlaybackMode>('list');
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const tracksRef = useRef<Soundscape[]>([]);
+  const currentSoundRef = useRef<Soundscape | null>(null);
+  const playbackModeRef = useRef<PlaybackMode>(playbackMode);
 
   // Use React Query to fetch tracks
   const { data: tracks = [], isLoading } = useQuery({
@@ -46,6 +49,19 @@ export const SoundscapeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   });
 
+  // Keep refs in sync with state
+  useEffect(() => {
+    tracksRef.current = tracks;
+  }, [tracks]);
+
+  useEffect(() => {
+    currentSoundRef.current = currentSound;
+  }, [currentSound]);
+
+  useEffect(() => {
+    playbackModeRef.current = playbackMode;
+  }, [playbackMode]);
+
   useEffect(() => {
     const audio = new Audio();
     audioRef.current = audio;
@@ -55,7 +71,18 @@ export const SoundscapeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         audio.currentTime = 0;
         audio.play().catch(err => console.error("Audio play failed:", err));
       } else {
-        nextTrack();
+        // Use the functional approach to get latest state if needed, 
+        // but here we use refs for simplicity and reliability in the listener
+        const currentTracks = tracksRef.current;
+        const currentS = currentSoundRef.current;
+        
+        if (currentTracks.length === 0) return;
+        
+        const currentIndex = currentS ? currentTracks.findIndex(t => t.id === currentS.id) : -1;
+        const nextIndex = (currentIndex + 1) % currentTracks.length;
+        
+        setCurrentSound(currentTracks[nextIndex]);
+        setIsPlaying(true);
       }
     };
 
@@ -67,12 +94,6 @@ export const SoundscapeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       audioRef.current = null;
     };
   }, []);
-
-  // Use a ref for playbackMode to avoid re-running the effect above
-  const playbackModeRef = useRef(playbackMode);
-  useEffect(() => {
-    playbackModeRef.current = playbackMode;
-  }, [playbackMode]);
 
   useEffect(() => {
     if (audioRef.current) {

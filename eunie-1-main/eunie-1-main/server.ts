@@ -228,7 +228,7 @@ async function startServer() {
           photoURL, 
           role || 'free_member', 
           subscription_status || 'none',
-          points !== undefined ? points : 0,
+          points !== undefined ? points : 1,
           subscription_tier || 'none',
           is_first_purchase !== undefined ? is_first_purchase : true
         ]
@@ -817,7 +817,7 @@ async function startServer() {
   // Ocean of Resonance API
   app.get("/api/bottles/tags", async (req, res) => {
     try {
-      const result = await pool.query("SELECT * FROM bottle_tags ORDER BY created_at ASC");
+      const result = await pool.query("SELECT * FROM bottle_tags WHERE is_active = TRUE ORDER BY sort_order ASC");
       res.json(result.rows);
     } catch (err) {
       console.error("Error fetching bottle tags:", err);
@@ -826,13 +826,24 @@ async function startServer() {
   });
 
   app.post("/api/bottles", async (req, res) => {
-    const { userId, content, element, lang, originLocale, cardId, quote, reportId, nickname, cardImageUrl, cardName } = req.body;
+    const { userId, content, element, lang, originLocale, cardId, quote, reportId, nickname, cardImageUrl, cardName, tagId } = req.body;
     
     try {
       // 1. Check if user has at least one report
       const reportsCount = await pool.query("SELECT COUNT(*) FROM energy_reports WHERE user_id = $1", [userId]);
       if (parseInt(reportsCount.rows[0].count) === 0) {
         return res.status(403).json({ error: "You must complete at least one energy test to create a bottle mail." });
+      }
+
+      // 1.1 Check if this report has already been used for a bottle
+      if (reportId) {
+        const existingBottle = await pool.query("SELECT id FROM bottles WHERE report_id = $1", [reportId]);
+        if (existingBottle.rows.length > 0) {
+          return res.status(400).json({ 
+            error: "This energy report has already been used to cast a bottle.",
+            code: "REPORT_ALREADY_USED"
+          });
+        }
       }
 
       // 2. Check Premium Status
@@ -865,16 +876,50 @@ async function startServer() {
         }
       }
 
+      // 4.1 AI Content Moderation (Gemini)
+      if (process.env.GEMINI_API_KEY) {
+        try {
+          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+          const model = "gemini-3-flash-preview";
+          const moderationPrompt = `You are a content moderator for a meditation and emotional resonance app. 
+          Analyze the following message for hate speech, extreme negativity, harassment, or inappropriate content.
+          Respond ONLY with "PASS" if the content is safe and warm, or "FAIL" if it is inappropriate.
+          Message: ${content}`;
+          
+          const moderationResponse = await ai.models.generateContent({
+            model,
+            contents: [{ parts: [{ text: moderationPrompt }] }]
+          });
+          
+          const moderationResult = moderationResponse.text?.trim().toUpperCase();
+          if (moderationResult === "FAIL") {
+            return res.status(400).json({ 
+              error: "The ocean currents are too turbulent for this message right now. Please try to calm your heart and try again.", 
+              code: "AI_MODERATION_FAILED" 
+            });
+          }
+        } catch (aiErr) {
+          console.error("AI Moderation error:", aiErr);
+          // If AI fails, we fall back to the manual sensitive word filter (already passed)
+        }
+      }
+
       // 5. Save Bottle
       const { energyColorTag } = req.body;
       const result = await pool.query(
-        "INSERT INTO bottles (user_id, content, element, lang, origin_locale, card_id, quote, report_id, sender_nickname, card_image_url, card_name_saved, energy_color_tag) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *",
-        [userId, content, element, lang, originLocale, cardId, quote, reportId, nickname, cardImageUrl, cardName, energyColorTag]
+        "INSERT INTO bottles (user_id, content, element, lang, origin_locale, card_id, quote, report_id, sender_nickname, card_image_url, card_name_saved, energy_color_tag, tag_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *",
+        [userId, content, element, lang, originLocale, cardId, quote, reportId, nickname, cardImageUrl, cardName, energyColorTag, tagId]
       );
       
       res.json(result.rows[0]);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error casting bottle:", err);
+      if (err.code === '23505' && err.detail?.includes('report_id')) {
+        return res.status(400).json({ 
+          error: "This energy report has already been cast into the ocean.", 
+          code: "REPORT_ALREADY_USED" 
+        });
+      }
       res.status(500).json({ error: "Internal server error" });
     }
   });
@@ -882,20 +927,35 @@ async function startServer() {
   app.get("/api/bottles/random", async (req, res) => {
     const { userId, targetLang } = req.query;
     try {
-      // Pick a random bottle that is active and not from the current user
+      // Pick a random bottle that is:
+      // 1. Active
+      // 2. Not from the current user
+      // 3. Within 30 days
+      // 4. NOT already saved by the current user
+      // 5. NOT already blessed by the current user
       const result = await pool.query(
         `SELECT b.*, 
                 COALESCE(b.sender_nickname, u.display_name) as sender_name,
                 COALESCE(b.card_image_url, ci.image_url, cw.image_url) as card_image,
                 COALESCE(b.card_name_saved, ci.name, cw.name) as card_name,
                 er.report_data,
+                bt.zh as tag_zh,
+                bt.ja as tag_ja,
                 (SELECT COUNT(*) FROM bottle_blessings WHERE bottle_id = b.id) as blessing_count
          FROM bottles b 
          JOIN users u ON b.user_id = u.uid 
          LEFT JOIN cards_image ci ON b.card_id = ci.id
          LEFT JOIN cards_word cw ON b.card_id = cw.id
          LEFT JOIN energy_reports er ON b.report_id = er.id
-         WHERE b.is_active = TRUE AND b.user_id != $1 
+         LEFT JOIN bottle_tags bt ON b.tag_id = bt.id
+         WHERE b.is_active = TRUE 
+           AND b.user_id != $1 
+           AND b.created_at > NOW() - INTERVAL '30 days'
+           AND b.id NOT IN (
+             SELECT bottle_id FROM saved_bottles WHERE user_id = $1
+             UNION
+             SELECT bottle_id FROM bottle_blessings WHERE user_id = $1
+           )
          ORDER BY RANDOM() LIMIT 1`,
         [userId || '']
       );
@@ -911,29 +971,55 @@ async function startServer() {
         console.error("Error incrementing bottle view count:", err);
       });
       
-      // Translation logic using Gemini
-      if (targetLang && bottle.lang !== targetLang && process.env.GEMINI_API_KEY) {
-        try {
-          const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-          const model = "gemini-3-flash-preview";
-          const prompt = `Translate the following message from ${bottle.lang} to ${targetLang}. Only return the translated text.
-          Message: ${bottle.content}`;
-          
-          const aiResponse = await ai.models.generateContent({
-            model,
-            contents: [{ parts: [{ text: prompt }] }]
-          });
-          
-          bottle.translatedContent = aiResponse.text;
-        } catch (aiErr) {
-          console.error("AI Translation error:", aiErr);
-          // Fallback: don't include translatedContent if AI fails
-        }
-      }
-      
       res.json(bottle);
     } catch (err) {
       console.error("Error picking up bottle:", err);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/bottles/:id/translate", async (req, res) => {
+    const { id } = req.params;
+    const { targetLang } = req.body;
+    
+    try {
+      // 1. Check cache first
+      const bottleResult = await pool.query("SELECT content, lang, translated_content FROM bottles WHERE id = $1", [id]);
+      if (bottleResult.rows.length === 0) {
+        return res.status(404).json({ error: "Bottle not found" });
+      }
+      
+      const bottle = bottleResult.rows[0];
+      
+      // If already translated and cached (simple cache for now)
+      if (bottle.translated_content) {
+        return res.json({ translatedContent: bottle.translated_content });
+      }
+      
+      // 2. Call Gemini for translation
+      if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: "Translation service unavailable" });
+      }
+      
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+      const model = "gemini-3-flash-preview";
+      const prompt = `Translate the following message from ${bottle.lang} to ${targetLang}. 
+      The tone should match the original emotional resonance. Only return the translated text.
+      Message: ${bottle.content}`;
+      
+      const aiResponse = await ai.models.generateContent({
+        model,
+        contents: [{ parts: [{ text: prompt }] }]
+      });
+      
+      const translatedContent = aiResponse.text;
+      
+      // 3. Cache the result
+      await pool.query("UPDATE bottles SET translated_content = $1 WHERE id = $2", [translatedContent, id]);
+      
+      res.json({ translatedContent });
+    } catch (err) {
+      console.error("Error translating bottle:", err);
       res.status(500).json({ error: "Internal server error" });
     }
   });
@@ -978,12 +1064,15 @@ async function startServer() {
                 COALESCE(b.card_image_url, ci.image_url, cw.image_url) as card_image,
                 COALESCE(b.card_name_saved, ci.name, cw.name) as card_name,
                 er.report_data,
+                bt.zh as tag_zh,
+                bt.ja as tag_ja,
                 (SELECT COUNT(*) FROM bottle_blessings WHERE bottle_id = b.id) as blessing_count,
                 (SELECT MAX(created_at) FROM bottle_blessings WHERE bottle_id = b.id) as last_blessing_at
          FROM bottles b 
          LEFT JOIN cards_image ci ON b.card_id = ci.id
          LEFT JOIN cards_word cw ON b.card_id = cw.id
          LEFT JOIN energy_reports er ON b.report_id = er.id
+         LEFT JOIN bottle_tags bt ON b.tag_id = bt.id
          WHERE b.user_id = $1 
          ORDER BY b.created_at DESC`,
         [userId]
@@ -1018,12 +1107,16 @@ async function startServer() {
                 b.*, 
                 COALESCE(b.card_image_url, ci.image_url, cw.image_url) as card_image,
                 COALESCE(b.card_name_saved, ci.name, cw.name) as card_name,
-                er.report_data
+                er.report_data,
+                bt.zh as tag_zh,
+                bt.ja as tag_ja,
+                (SELECT COUNT(*) FROM bottle_blessings WHERE bottle_id = b.id) as blessing_count
          FROM saved_bottles sb
          JOIN bottles b ON sb.bottle_id = b.id
          LEFT JOIN cards_image ci ON b.card_id = ci.id
          LEFT JOIN cards_word cw ON b.card_id = cw.id
          LEFT JOIN energy_reports er ON b.report_id = er.id
+         LEFT JOIN bottle_tags bt ON b.tag_id = bt.id
          WHERE sb.user_id = $1 
          ORDER BY sb.saved_at DESC`,
         [userId]
@@ -1039,6 +1132,29 @@ async function startServer() {
     const { id } = req.params;
     const { userId, replyMessage } = req.body;
     try {
+      // Check 48h cooldown for replies between this user and this bottle
+      if (replyMessage && replyMessage.trim()) {
+        const lastReply = await pool.query(
+          "SELECT created_at FROM bottle_replies WHERE bottle_id = $1 AND sender_id = $2 ORDER BY created_at DESC LIMIT 1",
+          [id, userId]
+        );
+        
+        if (lastReply.rows.length > 0) {
+          const lastTime = new Date(lastReply.rows[0].created_at).getTime();
+          const now = new Date().getTime();
+          const diffHours = (now - lastTime) / (1000 * 60 * 60);
+          
+          if (diffHours < 48) {
+            const remainingHours = Math.ceil(48 - diffHours);
+            return res.status(429).json({ 
+              error: `The ocean currents are still carrying your previous message. Please wait ${remainingHours} more hours.`,
+              code: "REPLY_COOLDOWN",
+              remainingHours
+            });
+          }
+        }
+      }
+
       // Check limit (20)
       const countResult = await pool.query("SELECT COUNT(*) FROM saved_bottles WHERE user_id = $1", [userId]);
       if (parseInt(countResult.rows[0].count) >= 20) {
@@ -1471,7 +1587,11 @@ async function startServer() {
 
   app.get("/api/admin/bottles/tags", async (req, res) => {
     try {
-      const result = await pool.query("SELECT * FROM bottle_tags ORDER BY created_at DESC");
+      const result = await pool.query(`
+        SELECT * FROM bottle_tags 
+        WHERE (zh IS NOT NULL AND zh != '') OR (ja IS NOT NULL AND ja != '')
+        ORDER BY sort_order ASC, created_at DESC
+      `);
       res.json(result.rows);
     } catch (err) {
       console.error("Error fetching admin bottle tags:", err);
@@ -1480,17 +1600,23 @@ async function startServer() {
   });
 
   app.post("/api/admin/bottles/tags", async (req, res) => {
-    const { id, name_zh, name_ja, color, category } = req.body;
+    const { id, zh, ja, color, category, sort_order } = req.body;
+    
+    // Validation: At least one name must be provided
+    if ((!zh || zh.trim() === '') && (!ja || ja.trim() === '')) {
+      return res.status(400).json({ error: "At least one translation (ZH or JA) must be provided" });
+    }
+
     try {
       if (id) {
         await pool.query(
-          "UPDATE bottle_tags SET name_zh = $1, name_ja = $2, color = $3, category = $4 WHERE id = $5",
-          [name_zh, name_ja, color, category || 'blessing', id]
+          "UPDATE bottle_tags SET zh = $1, ja = $2, color = $3, category = $4, sort_order = $5 WHERE id = $6",
+          [zh, ja, color, category || 'blessing', sort_order || 0, id]
         );
       } else {
         await pool.query(
-          "INSERT INTO bottle_tags (name_zh, name_ja, color, category) VALUES ($1, $2, $3, $4)",
-          [name_zh, name_ja, color, category || 'blessing']
+          "INSERT INTO bottle_tags (zh, ja, color, category, sort_order) VALUES ($1, $2, $3, $4, $5)",
+          [zh, ja, color, category || 'blessing', sort_order || 0]
         );
       }
       res.json({ success: true });
@@ -1897,6 +2023,7 @@ async function initializeDatabase(pool: pg.Pool) {
         card_image_url TEXT,
         card_name_saved TEXT,
         energy_color_tag TEXT,
+        tag_id INTEGER,
         view_count INTEGER DEFAULT 0,
         is_active BOOLEAN DEFAULT TRUE,
         last_checked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -1909,16 +2036,62 @@ async function initializeDatabase(pool: pg.Pool) {
       ALTER TABLE bottles ADD COLUMN IF NOT EXISTS view_count INTEGER DEFAULT 0;
       ALTER TABLE bottles ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
       ALTER TABLE bottles ADD COLUMN IF NOT EXISTS energy_color_tag TEXT;
+      ALTER TABLE bottles ADD COLUMN IF NOT EXISTS translated_content TEXT;
+      ALTER TABLE bottles ADD COLUMN IF NOT EXISTS tag_id INTEGER;
     `);
+
+    // Ensure UNIQUE constraint on report_id for bottles (one bottle per report)
+    try {
+      await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_bottles_report_id_unique ON bottles(report_id) WHERE report_id IS NOT NULL`);
+    } catch (e) {
+      console.error("Error creating unique index on report_id:", e);
+    }
 
     // Bottle Tags table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS bottle_tags (
         id SERIAL PRIMARY KEY,
         tag TEXT UNIQUE,
+        zh TEXT,
+        ja TEXT,
+        sort_order INTEGER DEFAULT 0,
+        is_active BOOLEAN DEFAULT TRUE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+
+    // Add missing columns to bottle_tags if they don't exist
+    await pool.query(`
+      ALTER TABLE bottle_tags ADD COLUMN IF NOT EXISTS zh TEXT;
+      ALTER TABLE bottle_tags ADD COLUMN IF NOT EXISTS ja TEXT;
+      ALTER TABLE bottle_tags ADD COLUMN IF NOT EXISTS sort_order INTEGER DEFAULT 0;
+      ALTER TABLE bottle_tags ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT TRUE;
+      ALTER TABLE bottle_tags ADD COLUMN IF NOT EXISTS color TEXT;
+      ALTER TABLE bottle_tags ADD COLUMN IF NOT EXISTS category TEXT DEFAULT 'blessing';
+    `);
+
+    // Migrate data from old column names if they exist
+    try {
+      await pool.query(`
+        DO $$ 
+        BEGIN 
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='bottle_tags' AND column_name='name_zh') THEN
+            UPDATE bottle_tags SET zh = name_zh WHERE zh IS NULL;
+          END IF;
+          IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='bottle_tags' AND column_name='name_ja') THEN
+            UPDATE bottle_tags SET ja = name_ja WHERE ja IS NULL;
+          END IF;
+        END $$;
+      `);
+      
+      // Cleanup: Delete any tags where both zh and ja are empty or null
+      await pool.query(`
+        DELETE FROM bottle_tags 
+        WHERE (zh IS NULL OR zh = '') AND (ja IS NULL OR ja = '')
+      `);
+    } catch (e) {
+      console.error("Migration/Cleanup error for bottle_tags:", e);
+    }
 
     // Ensure UNIQUE constraint on tag for bottle_tags
     try {
@@ -2117,12 +2290,40 @@ async function initializeDatabase(pool: pg.Pool) {
       ON CONFLICT (key) DO NOTHING;
     `);
 
+    // Cleanup empty tags that might have been created before
+    try {
+      await pool.query(`
+        DELETE FROM bottle_tags 
+        WHERE (zh IS NULL OR zh = '') 
+          AND (ja IS NULL OR ja = '') 
+          AND tag IS NULL;
+      `);
+    } catch (e) {
+      console.error("Cleanup error for bottle_tags:", e);
+    }
+
     // Seed bottle tags
-    await pool.query(`
-      INSERT INTO bottle_tags (tag)
-      VALUES ('love'), ('career'), ('health'), ('family'), ('friendship'), ('wealth'), ('spiritual')
-      ON CONFLICT (tag) DO NOTHING;
-    `);
+    const blessingTags = [
+      { tag: 'peace', zh: '平安健康', ja: '平穏無事', order: 1 },
+      { tag: 'success', zh: '順心如意', ja: '思い通り', order: 2 },
+      { tag: 'wealth', zh: '財源廣進', ja: '金運上昇', order: 3 },
+      { tag: 'career', zh: '事業有成', ja: '仕事成就', order: 4 },
+      { tag: 'study', zh: '學業進步', ja: '学業成就', order: 5 },
+      { tag: 'love', zh: '感情美滿', ja: '恋愛成就', order: 6 },
+      { tag: 'family', zh: '家庭和睦', ja: '家庭円満', order: 7 },
+      { tag: 'luck', zh: '萬事大吉', ja: '万事大吉', order: 8 },
+      { tag: 'wish', zh: '心想事成', ja: '願望成就', order: 9 },
+      { tag: 'blessing', zh: '福氣滿滿', ja: '福徳円満', order: 10 }
+    ];
+
+    for (const bt of blessingTags) {
+      await pool.query(
+        `INSERT INTO bottle_tags (tag, zh, ja, sort_order) 
+         VALUES ($1, $2, $3, $4) 
+         ON CONFLICT (tag) DO UPDATE SET zh = EXCLUDED.zh, ja = EXCLUDED.ja, sort_order = EXCLUDED.sort_order`,
+        [bt.tag, bt.zh, bt.ja, bt.order]
+      );
+    }
 
     // Seed sensitive words
     await pool.query(`
@@ -2169,17 +2370,10 @@ async function initializeDatabase(pool: pg.Pool) {
         }
       ];
 
-      if (defaultPrompts.length > 0) {
-        const values: any[] = [];
-        const placeholders = defaultPrompts.map((p, i) => {
-          const offset = i * 6;
-          values.push(p.module_name, p.content_zh, p.content_ja, p.category, p.status, p.version);
-          return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6})`;
-        }).join(", ");
-
+      for (const p of defaultPrompts) {
         await pool.query(
-          `INSERT INTO ai_prompts (module_name, content_zh, content_ja, category, status, version) VALUES ${placeholders}`,
-          values
+          "INSERT INTO ai_prompts (module_name, content_zh, content_ja, category, status, version) VALUES ($1, $2, $3, $4, $5, $6)",
+          [p.module_name, p.content_zh, p.content_ja, p.category, p.status, p.version]
         );
       }
       console.log("Default AI prompts seeded.");

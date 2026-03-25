@@ -2,6 +2,146 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminService } from '../services/adminService';
 import { AIPrompt, ImageCard, WordCard } from '../core/types';
 
+export const useAdminContentManifestations = (limit: number = 50, offset: number = 0) => {
+  return useQuery({
+    queryKey: ['admin', 'content', 'manifestations', limit, offset],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/content/manifestations?limit=${limit}&offset=${offset}`);
+      if (!res.ok) throw new Error('Failed to fetch manifestations');
+      return res.json();
+    }
+  });
+};
+
+export const useAdminContentJournals = (limit: number = 50, offset: number = 0) => {
+  return useQuery({
+    queryKey: ['admin', 'content', 'journals', limit, offset],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/content/journals?limit=${limit}&offset=${offset}`);
+      if (!res.ok) throw new Error('Failed to fetch journals');
+      return res.json();
+    }
+  });
+};
+
+export const useDeleteManifestationMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/admin/content/manifestations/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete manifestation');
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'content', 'manifestations'] });
+    }
+  });
+};
+
+export const useUpdateManifestationStatusMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string, status: string }) => {
+      const res = await fetch(`/api/admin/content/manifestations/${id}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) throw new Error('Failed to update manifestation status');
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'content', 'manifestations'] });
+    }
+  });
+};
+
+export const useDeleteJournalMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/admin/content/journals/${id}`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Failed to delete journal');
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'content', 'journals'] });
+    }
+  });
+};
+
+export const useAdminUserDetails = (uid: string | null) => {
+  return useQuery({
+    queryKey: ['admin', 'user-details', uid],
+    queryFn: async () => {
+      if (!uid) return null;
+      const res = await fetch(`/api/admin/users/${uid}/details`);
+      if (!res.ok) throw new Error('Failed to fetch user details');
+      return res.json();
+    },
+    enabled: !!uid
+  });
+};
+
+export const useUpdateUserStatusMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ uid, role, status }: { uid: string, role?: string, status?: string }) => {
+      const res = await fetch(`/api/admin/users/${uid}/status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role, status })
+      });
+      if (!res.ok) throw new Error('Failed to update user status');
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'user-details'] });
+    }
+  });
+};
+
+export const useDeleteBottlesMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await fetch('/api/admin/bottles', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+      });
+      if (!res.ok) throw new Error('Failed to delete bottles');
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bottles'] });
+    }
+  });
+};
+
+export const useApproveBottlesMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      const res = await fetch('/api/admin/bottles/batch-approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids })
+      });
+      if (!res.ok) throw new Error('Failed to approve bottles');
+      return true;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'bottles'] });
+    }
+  });
+};
+
 export const useAdminStats = () => {
   return useQuery({
     queryKey: ['admin', 'stats'],
@@ -77,10 +217,10 @@ export const useAdminPrompts = (category?: string) => {
   });
 };
 
-export const useAdminAnalytics = () => {
+export const useAdminAnalytics = (days: number = 30) => {
   return useQuery({
-    queryKey: ['admin', 'analytics'],
-    queryFn: () => adminService.getAnalyticsData(),
+    queryKey: ['admin', 'analytics', days],
+    queryFn: () => adminService.getAnalyticsData(days),
   });
 };
 

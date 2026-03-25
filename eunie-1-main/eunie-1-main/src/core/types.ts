@@ -238,6 +238,7 @@ export interface Bottle {
   lang: string;
   origin_locale: string;
   energy_color_tag?: string;
+  tag_id?: string;
   hug_count?: number;
   card_id?: string;
   quote?: string;
@@ -258,13 +259,17 @@ export interface Bottle {
   reply_message?: string; // For saved bottles
   saved_id?: string; // For saved bottles
   saved_at?: string; // For saved bottles
+  tag_zh?: string; // Joined from bottle_tags
+  tag_ja?: string; // Joined from bottle_tags
 }
 
 export interface BottleTag {
   id: string;
-  text_zh: string;
-  text_ja: string;
-  category: string;
+  tag: string;
+  zh: string;
+  ja: string;
+  sort_order: number;
+  is_active: boolean;
   created_at: string;
 }
 

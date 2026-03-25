@@ -3,7 +3,6 @@ import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'motion/
 import { Sparkles, User, History, Home, ShieldAlert, Waves, Menu, X } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useAuth } from '../../hooks/useAuth';
-import { getStoredAtmosphere, Atmosphere } from '../../core/atmospheres';
 
 interface NavigationProps {
   currentPath: string;
@@ -16,18 +15,6 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
   const [isExpanded, setIsExpanded] = useState(true); // Start expanded for 3s
   const { scrollY } = useScroll();
   const collapseTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const lastManualToggleRef = useRef<number>(0);
-  const [atmosphere, setAtmosphere] = useState<Atmosphere>(getStoredAtmosphere());
-
-  useEffect(() => {
-    const handleAtmosphereChange = () => {
-      setAtmosphere(getStoredAtmosphere());
-    };
-    window.addEventListener('atmosphere-changed', handleAtmosphereChange);
-    return () => window.removeEventListener('atmosphere-changed', handleAtmosphereChange);
-  }, []);
-
-  const glowColor = atmosphere.colors[0];
 
   // Auto-collapse after 5s of inactivity
   const resetCollapseTimer = () => {
@@ -48,20 +35,13 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
   // Smart Auto-Hide/Show Logic
   useMotionValueEvent(scrollY, "change", (latest) => {
     const previous = scrollY.getPrevious() || 0;
-    const now = Date.now();
-    
-    // Ignore scroll events for 1.5s after manual toggle to prevent immediate re-expansion
-    if (now - lastManualToggleRef.current < 1500) return;
-
     if (latest > previous && latest > 100) {
       // Scrolling down - Collapse
-      if (isExpanded) setIsExpanded(false);
-    } else if (latest < previous - 10) { // Add 10px threshold for scroll-up expansion
+      setIsExpanded(false);
+    } else if (latest < previous) {
       // Scrolling up - Expand
-      if (!isExpanded) {
-        setIsExpanded(true);
-        resetCollapseTimer();
-      }
+      setIsExpanded(true);
+      resetCollapseTimer();
     }
   });
 
@@ -98,7 +78,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
   return (
     <nav className="fixed bottom-6 right-6 md:right-12 z-50 flex items-center justify-end pointer-events-none">
       <div className="relative flex items-center justify-end pointer-events-auto">
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {isExpanded ? (
             <motion.div 
               key="expanded-nav"
@@ -134,29 +114,11 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
                     }}
                     className={`relative flex items-center gap-2 transition-all duration-500 px-3 md:px-4 py-2 rounded-full ${
                       isActive 
-                        ? 'text-ink' 
+                        ? 'text-ink bg-ink/5' 
                         : 'text-ink/30 hover:text-ink/60'
                     }`}
                   >
-                    {/* Breathing Glow for Active Button */}
-                    {isActive && (
-                      <motion.div
-                        layoutId="active-glow"
-                        animate={{ 
-                          opacity: [0.15, 0.35, 0.15],
-                          scale: [1, 1.05, 1]
-                        }}
-                        transition={{ 
-                          repeat: Infinity, 
-                          duration: 4, 
-                          ease: "easeInOut" 
-                        }}
-                        className="absolute inset-0 rounded-full blur-md pointer-events-none"
-                        style={{ backgroundColor: glowColor }}
-                      />
-                    )}
-                    
-                    <Icon size={isActive ? 18 : 16} strokeWidth={isActive ? 1.8 : 1.2} className="relative z-10" />
+                    <Icon size={isActive ? 18 : 16} strokeWidth={isActive ? 1.8 : 1.2} />
                     
                     <AnimatePresence mode="wait">
                       {isActive && (
@@ -165,7 +127,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
                           animate={{ width: 'auto', opacity: 1, x: 0 }}
                           exit={{ width: 0, opacity: 0, x: -5 }}
                           transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                          className="text-[10px] whitespace-nowrap tracking-[0.1em] font-sans font-medium overflow-hidden relative z-10"
+                          className="text-[10px] whitespace-nowrap tracking-[0.1em] font-sans font-medium overflow-hidden"
                         >
                           {item.label}
                         </motion.span>
@@ -177,10 +139,7 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
 
               {/* Collapse Toggle */}
               <button 
-                onClick={() => {
-                  lastManualToggleRef.current = Date.now();
-                  setIsExpanded(false);
-                }}
+                onClick={() => setIsExpanded(false)}
                 className="ml-2 p-2 text-ink/20 hover:text-ink/40 transition-colors border-l border-ink/5"
               >
                 <X size={14} />
@@ -194,29 +153,27 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
               exit={{ scale: 0, opacity: 0 }}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
-              onClick={() => {
-                lastManualToggleRef.current = Date.now();
-                setIsExpanded(true);
-              }}
-              className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-500 ${
+              onClick={() => setIsExpanded(true)}
+              className={`relative w-14 h-14 rounded-full flex items-center justify-center shadow-xl transition-all duration-500 ${
                 isPremium 
-                  ? 'bg-emerald-50 border border-emerald-500/30' 
-                  : 'bg-white border border-white/20 backdrop-blur-md'
+                  ? 'bg-emerald-500/10 border border-emerald-500/30' 
+                  : 'bg-white/40 border border-white/50 backdrop-blur-md'
               }`}
             >
               {/* Breathing Glow Effect */}
               <motion.div
                 animate={{ 
-                  scale: [1, 1.3, 1],
+                  scale: [1, 1.2, 1],
                   opacity: [0.3, 0.6, 0.3]
                 }}
                 transition={{ 
                   repeat: Infinity, 
-                  duration: 4, 
+                  duration: 3, 
                   ease: "easeInOut" 
                 }}
-                className="absolute inset-0 rounded-full blur-xl pointer-events-none"
-                style={{ backgroundColor: glowColor }}
+                className={`absolute inset-0 rounded-full ${
+                  isPremium ? 'bg-emerald-400' : 'bg-ink/10'
+                }`}
               />
               
               <Menu size={20} className="text-ink/40 relative z-10" strokeWidth={1.5} />

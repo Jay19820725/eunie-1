@@ -107,11 +107,9 @@ export const useEnergyTestState = (onComplete: () => void) => {
 
   const handleComplete = async () => {
     setIsGenerating(true);
-    const report = await generateReport();
+    await generateReport();
     setIsGenerating(false);
-    if (report) {
-      onComplete();
-    }
+    onComplete();
   };
 
   return {

@@ -20,11 +20,6 @@ interface TestContextType {
   setAssociations: (associations: { pair_id: string; text: string }[]) => void;
   generateReport: () => Promise<AnalysisReport | null>;
   setReport: (report: AnalysisReport | null) => void;
-  userPoints: number;
-  isFirstPurchase: boolean;
-  fetchUserPoints: () => Promise<void>;
-  isPurchaseModalOpen: boolean;
-  setIsPurchaseModalOpen: (isOpen: boolean) => void;
 }
 
 const TestContext = createContext<TestContextType | undefined>(undefined);
@@ -35,41 +30,15 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isCompleted, setIsCompleted] = useState(false);
   const [report, setReport] = useState<AnalysisReport | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [userPoints, setUserPoints] = useState<number>(0);
-  const [isFirstPurchase, setIsFirstPurchase] = useState<boolean>(true);
-  const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
   const { language } = useLanguage();
 
-  const fetchUserPoints = useCallback(async () => {
-    const user = auth.currentUser;
-    if (!user) return;
-    try {
-      const res = await fetch(`/api/users/${user.uid}/points`);
-      const data = await res.json();
-      setUserPoints(data.points || 0);
-      setIsFirstPurchase(data.is_first_purchase !== false);
-    } catch (err) {
-      console.error("Failed to fetch user points:", err);
-    }
-  }, []);
-
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        fetchUserPoints();
-        syncPendingReports();
-      } else {
-        // Reset state on logout
-        setUserPoints(0);
-        setIsFirstPurchase(true);
-        setReport(null);
-        setSelectedCards({ images: [], words: [], drawnAt: 0 });
-        setCurrentStep(0);
-        setIsCompleted(false);
-      }
+    // Clear cache and preload when language changes
+    import('../services/cardEngine').then(({ clearDeckCache, preloadDecks }) => {
+      clearDeckCache(language);
+      preloadDecks(language);
     });
-    return () => unsubscribe();
-  }, [fetchUserPoints]);
+  }, [language]);
 
   const startDraw = useCallback(async () => {
     setIsDrawing(true);
@@ -141,38 +110,13 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const generateReport = useCallback(async (): Promise<AnalysisReport | null> => {
     if (selectedCards.images.length === 0 && selectedCards.words.length === 0) return null;
     
-    const user = auth.currentUser;
+    // We don't set isDrawing(true) here anymore because we want instant transition
+    // unless we want a very brief "calculating" state. Let's keep it fast.
     
-    // Check points before generating AI report
-    if (!user) {
-      // Guest users must register to get points/analysis
-      setIsPurchaseModalOpen(true);
-      return null;
-    }
-
-    if (userPoints <= 0) {
-      setIsPurchaseModalOpen(true);
-      return null;
-    }
-
     try {
-      // Consume point
-      const consumeRes = await fetch('/api/reports/consume-points', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.uid })
-      });
-
-      if (!consumeRes.ok) {
-        setIsPurchaseModalOpen(true);
-        return null;
-      }
-
-      // Refresh points after consumption
-      fetchUserPoints();
-
       const analysis = EnergyEngine.analyze(selectedCards);
-      const userId = user.uid;
+      const user = auth.currentUser;
+      const userId = user?.uid || null;
 
       // 1. Create the initial report structure (Instant)
       const reportId = crypto.randomUUID();
@@ -265,8 +209,6 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await syncToCloud(finalReport);
         } catch (aiError) {
           console.error("Background AI Analysis failed:", aiError);
-          // Ensure the user isn't stuck in "weaving" state even if AI fails
-          setReport(prev => prev ? { ...prev, isAiComplete: true } : null);
         }
       };
 
@@ -278,7 +220,7 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.error("Report generation failed:", error);
       return null;
     }
-  }, [selectedCards, language, userPoints, fetchUserPoints]);
+  }, [selectedCards, language]);
 
   const syncPendingReports = useCallback(async () => {
     const pendingIds = JSON.parse(localStorage.getItem('eunie_pending_sync') || '[]');
@@ -356,12 +298,7 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setPairs,
       setAssociations,
       generateReport,
-      setReport,
-      userPoints,
-      isFirstPurchase,
-      fetchUserPoints,
-      isPurchaseModalOpen,
-      setIsPurchaseModalOpen
+      setReport
     }}>
       {children}
     </TestContext.Provider>
