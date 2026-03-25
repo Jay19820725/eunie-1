@@ -68,6 +68,18 @@ export const translations = {
     ocean_go_to_test: "前往測試",
     login_required_to_cast: "請先登入後再製作瓶中信。",
     ocean_cast_limit: "字數限制：{count}/100",
+    ocean_no_bottles: "目前海洋很平靜，暫時沒有新的訊息了。",
+    ocean_select_tag: "選擇祝福標籤",
+    tag_peace: "平安健康",
+    tag_success: "順心如意",
+    tag_wealth: "財源廣進",
+    tag_career: "事業有成",
+    tag_study: "學業進步",
+    tag_love: "感情美滿",
+    tag_family: "家庭和睦",
+    tag_luck: "萬事大吉",
+    tag_wish: "心想事成",
+    tag_blessing: "福氣滿滿",
     
     // Home Page
     home_top_slogan: "EUNIE 嶼妳 — 懂妳的能量，平衡妳的生活",
@@ -277,35 +289,6 @@ export const translations = {
     ocean_saved_reply_label: "妳的共鳴筆記",
     ocean_save_limit_error: "收藏數量已達上限 (20 封)",
 
-    // Revenue & Points
-    points_low_title: "靈光能量微弱",
-    points_low_body: "您的靈光即將耗盡，建議提前採集以維持能量校準。",
-    points_empty_title: "能量已耗盡",
-    points_empty_body: "目前的靈光不足以開啟深度報告，請前往採集。",
-    points_pre_consume_hint: "開啟這份深度報告將消耗 1 點靈光，準備好開始了嗎？",
-    points_remaining: "剩餘靈光",
-    points_scarcity_hint: "您的能量僅能支撐最後 {count} 次探索",
-
-    // Progress & Achievement
-    milestone_streak_title: "持續共鳴中",
-    milestone_streak_body: "妳已連續 {count} 天與內在對話，這份堅持正讓妳變得更強大。",
-    milestone_reports_title: "能量地圖擴張",
-    milestone_reports_body: "妳已累積了 {count} 份能量紀錄，這將成為妳寶貴的靈魂數據。",
-
-    // Re-engagement & Emotional Hooks
-    reengage_morning_title: "早安，今天的頻率是？",
-    reengage_morning_body: "在晨曦中，花三分鐘為自己進行能量校準吧。",
-    reengage_night_title: "深夜的沈澱時間",
-    reengage_night_body: "忙碌了一天，透過卡片聽聽內在被忽略的聲音。",
-    reengage_anxious_title: "感到心浮氣躁嗎？",
-    reengage_anxious_body: "停下腳步，讓卡片的隱喻為妳帶來平靜的視角。",
-
-    // System & Growth
-    sys_error_title: "能量流動受阻",
-    sys_error_body: "目前的連線有些不穩定，請稍後再試。",
-    growth_next_step_title: "下一步建議",
-    growth_next_step_body: "妳的能量趨於平衡，要不要去海洋分享這份喜悅？",
-
     // Milestone 4: Ocean Resonance
     ocean_resonance_success_title: "靈魂共鳴已完成",
     ocean_resonance_success_desc: "妳的能量已在海洋中迴盪。要不要將此刻的感受，記錄在內在沈澱（日誌）中？",
@@ -316,6 +299,11 @@ export const translations = {
     loop_completion_title: "今日能量閉環已達成",
     loop_completion_desc: "校準、共鳴、沈澱。妳在今日完成了與自己、與世界的溫柔連結。帶著這份平靜的能量，祝妳好夢。",
     loop_completion_btn: "度過了美好的一天",
+    
+    // Auth Prompt
+    auth_prompt_title: "開啟靈魂之旅",
+    auth_prompt_desc: "為了保存您的能量報告並開啟每日成長追蹤，請先登入您的專屬空間。",
+    auth_prompt_login_btn: "開啟靈魂之旅 (Google 登入)",
   },
   ja: {
     // General
@@ -386,6 +374,18 @@ export const translations = {
     ocean_go_to_test: "診断へ行く",
     login_required_to_cast: "瓶中信を作るにはログインが必要です。",
     ocean_cast_limit: "文字数制限：{count}/100",
+    ocean_no_bottles: "現在、海は穏やかです。新しいメッセージはまだありません。",
+    ocean_select_tag: "祝福タグを選択",
+    tag_peace: "平穏無事",
+    tag_success: "思い通り",
+    tag_wealth: "金運上昇",
+    tag_career: "仕事成就",
+    tag_study: "学業成就",
+    tag_love: "恋愛成就",
+    tag_family: "家庭円満",
+    tag_luck: "万事大吉",
+    tag_wish: "願望成就",
+    tag_blessing: "福徳円満",
 
     // Home Page
     home_top_slogan: "EUNIE 嶼妳 — あなたのエネルギーを知り、生活を整える",
@@ -596,35 +596,6 @@ export const translations = {
     ocean_saved_reply_label: "あなたの共鳴ノート",
     ocean_save_limit_error: "コレクションの上限（20通）に達しました",
 
-    // Revenue & Points
-    points_low_title: "霊光エネルギーが低下しています",
-    points_low_body: "霊光がまもなく枯渇します。安定した校正のために、早めの採集をお勧めします。",
-    points_empty_title: "エネルギーが枯渇しました",
-    points_empty_body: "現在の霊光では詳細レポートを開くことができません。採集へ進んでください。",
-    points_pre_consume_hint: "この詳細レポートを開くには1ポイントの霊光を消費します。準備はよろしいですか？",
-    points_remaining: "残り霊光",
-    points_scarcity_hint: "あなたのエネルギーは残り {count} 回の探索分です",
-
-    // Progress & Achievement
-    milestone_streak_title: "共鳴が続いています",
-    milestone_streak_body: "{count} 日連続で内なる対話を行っています。その継続があなたをより強くしています。",
-    milestone_reports_title: "エネルギー地図の拡大",
-    milestone_reports_body: "{count} 件のエネルギー記録が蓄積されました。これは貴重な魂のデータとなります。",
-
-    // Re-engagement & Emotional Hooks
-    reengage_morning_title: "おはようございます、今日の周波数は？",
-    reengage_morning_body: "朝日の中で、3分間のエネルギー校正を行ってみませんか。",
-    reengage_night_title: "深夜の沈殿時間",
-    reengage_night_body: "忙しい一日を終え、カードを通じて内なる声に耳を傾けてみましょう。",
-    reengage_anxious_title: "心がざわついていませんか？",
-    reengage_anxious_body: "立ち止まって、カードのメタファーから穏やかな視点を受け取りましょう。",
-
-    // System & Growth
-    sys_error_title: "エネルギーの流れが妨げられています",
-    sys_error_body: "接続が不安定です。時間をおいてもう一度お試しください。",
-    growth_next_step_title: "次のステップの提案",
-    growth_next_step_body: "エネルギーが整ってきました。この喜びを海で分かち合ってみませんか？",
-
     // Milestone 4: Ocean Resonance
     ocean_resonance_success_title: "魂の共鳴が完了しました",
     ocean_resonance_success_desc: "あなたのエネルギーが海に響き渡りました。今のこの感覚を、内なる沈殿（日誌）に記してみませんか？",
@@ -635,6 +606,11 @@ export const translations = {
     loop_completion_title: "今日のエネルギー閉環が完了しました",
     loop_completion_desc: "校準、共鳴、そして沈殿。あなたは今日、自分自身と世界との美しい調和を成し遂げました。この穏やかなエネルギーを抱いて、良い夢を。",
     loop_completion_btn: "素晴らしい一日でした",
+    
+    // Auth Prompt
+    auth_prompt_title: "魂の旅を始める",
+    auth_prompt_desc: "エネルギーレポートを保存し、日々の成長を追蹤するために、まずは専用スペースにサインインしてください。",
+    auth_prompt_login_btn: "魂の旅を始める (Googleでサインイン)",
   }
 };
 

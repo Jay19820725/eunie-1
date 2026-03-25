@@ -6,6 +6,7 @@ import { Crown, Check, Sparkles, Zap, Shield, Heart, ArrowRight, Star, Clock } f
 import { useAuth } from '../hooks/useAuth';
 import { userService } from '../services/userService';
 import { useLanguage } from '../i18n/LanguageContext';
+import toast from 'react-hot-toast';
 
 interface SubscriptionProps {
   onNavigate?: (page: string) => void;
@@ -20,14 +21,15 @@ export const Subscription: React.FC<SubscriptionProps> = ({ onNavigate }) => {
   const handleStartTrial = async () => {
     if (!user) return;
     setLoading(true);
+    const loadingToast = toast.loading('處理中...');
     try {
       const updated = await userService.startTrial(user.uid);
       setProfile(updated);
-      alert(t('trial_started' as any) || "7日間の無料トライアルを開始しました！");
+      toast.success(t('trial_started' as any) || "7日間の無料トライアルを開始しました！", { id: loadingToast });
       onNavigate?.('profile');
     } catch (error) {
       console.error("Trial start failed:", error);
-      alert(t('trial_failed' as any) || "トライアルの開始に失敗しました。");
+      toast.error(t('trial_failed' as any) || "トライアルの開始に失敗しました。", { id: loadingToast });
     } finally {
       setLoading(false);
     }
@@ -36,6 +38,7 @@ export const Subscription: React.FC<SubscriptionProps> = ({ onNavigate }) => {
   const handleUpgrade = async () => {
     if (!user) return;
     setLoading(true);
+    const loadingToast = toast.loading('升級中...');
     try {
       const updated = await userService.upgradeSubscription(
         user.uid, 
@@ -44,11 +47,11 @@ export const Subscription: React.FC<SubscriptionProps> = ({ onNavigate }) => {
         selectedPlan === 'monthly' ? 1 : 12
       );
       setProfile(updated);
-      alert(t('upgrade_success' as any) || "プレミアムプランへのアップグレードが完了しました！");
+      toast.success(t('upgrade_success' as any) || "プレミアムプランへのアップグレードが完了しました！", { id: loadingToast });
       onNavigate?.('profile');
     } catch (error) {
       console.error("Upgrade failed:", error);
-      alert(t('upgrade_failed' as any) || "アップグレードに失敗しました。");
+      toast.error(t('upgrade_failed' as any) || "アップグレードに失敗しました。", { id: loadingToast });
     } finally {
       setLoading(false);
     }

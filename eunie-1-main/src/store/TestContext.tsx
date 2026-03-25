@@ -58,6 +58,14 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (user) {
         fetchUserPoints();
         syncPendingReports();
+      } else {
+        // Reset state on logout
+        setUserPoints(0);
+        setIsFirstPurchase(true);
+        setReport(null);
+        setSelectedCards({ images: [], words: [], drawnAt: 0 });
+        setCurrentStep(0);
+        setIsCompleted(false);
       }
     });
     return () => unsubscribe();

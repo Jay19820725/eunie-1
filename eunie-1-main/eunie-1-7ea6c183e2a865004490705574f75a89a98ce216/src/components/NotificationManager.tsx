@@ -18,7 +18,7 @@ export const NotificationManager: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const addNotification = (type: Notification['type'], title: string, message: string, icon: any) => {
-    const id = crypto.randomUUID();
+    const id = Math.random().toString(36).substring(7);
     setNotifications(prev => [...prev, { id, title, message, type, icon }]);
     
     // Auto-remove after 5 seconds
