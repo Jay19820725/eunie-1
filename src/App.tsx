@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from 'motion/react';
 import { Sparkles, X, ArrowRight } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
 import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { Toaster } from 'react-hot-toast';
 import { SoundscapeProvider } from './store/SoundscapeContext';
 import { TestProvider, useTest } from './store/TestContext';
 import { SoundControl } from './components/layout/SoundControl';
@@ -206,6 +207,9 @@ function AppContent() {
   };
 
   const renderPage = () => {
+    if (window.location.search.includes('testAdmin=true')) {
+      return <AdminDashboard />;
+    }
     switch (currentPage) {
       case 'home':
         return <Home onStartTest={() => navigate('test')} onNavigate={navigate} loopStage={loopStage} streak={streak} />;
@@ -323,6 +327,21 @@ function AppContent() {
       
       {/* Subtle noise texture for high-end feel */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.015] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] -z-20" />
+
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            background: 'rgba(255, 255, 255, 0.9)',
+            color: '#2E2E2E',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(0,0,0,0.05)',
+            fontSize: '12px',
+            borderRadius: '16px',
+            padding: '12px 24px'
+          }
+        }}
+      />
     </div>
   );
 }
