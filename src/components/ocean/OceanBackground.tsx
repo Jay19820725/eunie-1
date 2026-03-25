@@ -39,7 +39,6 @@ const Ripple: React.FC<{
       marginLeft: -size / 2,
       marginTop: -size / 2,
       border: `${borderWidth}px solid ${color}`,
-      willChange: 'transform, opacity',
     }}
   />
 );
@@ -58,7 +57,7 @@ export const OceanBackground: React.FC = () => {
 
   // Generate random flickering light spots (Stardust)
   const lightSpots = useMemo(() => {
-    const count = isMobile ? 15 : 30;
+    const count = isMobile ? 8 : 30;
     return Array.from({ length: count }).map((_, i) => ({
       id: i,
       size: Math.random() * 3 + 1,
@@ -91,10 +90,9 @@ export const OceanBackground: React.FC = () => {
             opacity: [0.1, 0.15, 0.1],
           }}
           transition={{ duration: 30, repeat: Infinity, ease: "easeInOut" }}
-          className={`absolute -left-1/4 -top-1/4 w-full h-full rounded-full ${isMobile ? 'blur-[60px]' : 'blur-[120px]'}`}
+          className={`absolute -left-1/4 -top-1/4 w-full h-full rounded-full ${isMobile ? 'blur-[40px]' : 'blur-[120px]'}`}
           style={{ 
             background: 'radial-gradient(circle, #A8C97F 0%, transparent 70%)',
-            willChange: 'transform, opacity'
           }}
         />
         
@@ -107,10 +105,9 @@ export const OceanBackground: React.FC = () => {
             opacity: [0.08, 0.12, 0.08],
           }}
           transition={{ duration: 35, repeat: Infinity, ease: "easeInOut" }}
-          className={`absolute -right-1/4 -bottom-1/4 w-full h-full rounded-full ${isMobile ? 'blur-[80px]' : 'blur-[150px]'}`}
+          className={`absolute -right-1/4 -bottom-1/4 w-full h-full rounded-full ${isMobile ? 'blur-[50px]' : 'blur-[150px]'}`}
           style={{ 
             background: 'radial-gradient(circle, #33A6B8 0%, transparent 70%)',
-            willChange: 'transform, opacity'
           }}
         />
       </div>
@@ -164,19 +161,20 @@ export const OceanBackground: React.FC = () => {
               borderRadius: '50%',
               boxShadow: '0 0 8px rgba(255, 255, 255, 0.5)',
               filter: 'blur(0.5px)',
-              willChange: 'transform, opacity'
             }}
           />
         ))}
       </div>
 
       {/* 5. Washi Grain Texture Overlay - Simplified for Mobile */}
-      <div 
-        className="absolute inset-0 pointer-events-none opacity-[0.02]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-        }}
-      />
+      {!isMobile && (
+        <div
+          className="absolute inset-0 pointer-events-none opacity-[0.02]"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+          }}
+        />
+      )}
 
       {/* 6. Subtle Surface Shimmer */}
       <motion.div
@@ -189,7 +187,6 @@ export const OceanBackground: React.FC = () => {
           ease: "easeInOut",
         }}
         className="absolute inset-0 pointer-events-none bg-gradient-to-b from-white/5 via-transparent to-white/5"
-        style={{ willChange: 'opacity' }}
       />
     </div>
   );
