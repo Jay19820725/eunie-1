@@ -17,11 +17,21 @@ interface CastBottleModalProps {
 
 type Step = 'check' | 'select_report' | 'select_card' | 'write';
 
+interface BottleTag {
+  id: number;
+  tag: string;
+  zh: string;
+  ja: string;
+  sort_order: number;
+}
+
 export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClose, onNavigate, onSuccess, initialReport }) => {
   const { t, language } = useLanguage();
   const { user, isPremium } = useAuth();
   const [step, setStep] = useState<Step>('check');
   const [reports, setReports] = useState<AnalysisReport[]>([]);
+  const [tags, setTags] = useState<BottleTag[]>([]);
+  const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
   const [selectedReport, setSelectedReport] = useState<AnalysisReport | null>(null);
   const [selectedCard, setSelectedCard] = useState<{ id: string; type: 'img' | 'word'; url?: string; text?: string; name: string } | null>(null);
   const [content, setContent] = useState('');
@@ -64,6 +74,7 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
       } else {
         fetchReports();
       }
+      fetchTags();
 
       if (user.default_bottle_nickname) {
         setNickname(user.default_bottle_nickname);
@@ -92,6 +103,21 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
       console.error("Error fetching reports:", err);
     } finally {
       setIsLoadingReports(false);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const response = await fetch('/api/bottles/tags');
+      if (response.ok) {
+        const data = await response.json();
+        setTags(data);
+        if (data.length > 0) {
+          setSelectedTagId(data[0].id);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching tags:", err);
     }
   };
 
@@ -124,7 +150,8 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
           quote: quote.trim(),
           reportId: selectedReport.id,
           nickname: nickname.trim(),
-          energyColorTag: energyColor
+          energyColorTag: energyColor,
+          tagId: selectedTagId
         }),
       });
 
@@ -346,6 +373,28 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
                   style={{ backgroundColor: c.color }}
                   title={c.label}
                 />
+              ))}
+            </div>
+          </div>
+
+          {/* Tag Selection */}
+          <div className="space-y-4">
+            <label className="text-[12px] tracking-widest text-ink/40 uppercase px-1">
+              {t('ocean_select_tag')}
+            </label>
+            <div className="flex flex-wrap gap-2 px-1">
+              {tags.map((tag, index) => (
+                <button
+                  key={tag.id || `tag-${index}`}
+                  onClick={() => setSelectedTagId(tag.id)}
+                  className={`px-4 py-2 rounded-full text-[11px] tracking-wider transition-all border ${
+                    selectedTagId === tag.id 
+                      ? 'bg-ink text-white border-ink shadow-md' 
+                      : 'bg-white text-ink/60 border-ink/10 hover:border-ink/30'
+                  }`}
+                >
+                  {language === 'ja' ? tag.ja : tag.zh}
+                </button>
               ))}
             </div>
           </div>

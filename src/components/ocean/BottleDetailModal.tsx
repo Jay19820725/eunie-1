@@ -261,6 +261,14 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                         </span>
                       </div>
                     )}
+                    {(activeBottle.tag_zh || activeBottle.tag_ja) && (
+                      <div className="flex items-center gap-2 text-water">
+                        <Heart size={14} className="fill-water" />
+                        <span className="text-[10px] tracking-[0.2em] uppercase font-bold">
+                          {language === 'ja' ? activeBottle.tag_ja : activeBottle.tag_zh}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -361,7 +369,7 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                         className="group py-2.5 px-5 rounded-full border border-ink/10 text-[11px] text-ink/40 hover:bg-water hover:text-white hover:border-water transition-all flex items-center gap-2 uppercase tracking-[0.1em] font-medium"
                       >
                         <Heart size={12} className="group-hover:scale-110 transition-transform" />
-                        {language === 'ja' ? tag.text_ja : tag.text_zh}
+                        {language === 'ja' ? tag.ja : tag.zh}
                       </button>
                     ))}
                     
