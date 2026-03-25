@@ -36,6 +36,16 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isCastModalOpen, setIsCastModalOpen] = useState(false);
   const [showResonanceSuccess, setShowResonanceSuccess] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Ambient Sound State
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -401,20 +411,22 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
               >
                 <motion.div
                   animate={isAmbientPlaying ? { 
-                    scale: [1, 1.4, 1], 
-                    opacity: [0.2, 0.5, 0.2] 
+                    scale: isMobile ? [1, 1.2, 1] : [1, 1.4, 1], 
+                    opacity: isMobile ? [0.2, 0.4, 0.2] : [0.2, 0.5, 0.2] 
                   } : { 
                     scale: [1, 1.1, 1], 
                     opacity: [0.1, 0.2, 0.1] 
                   }}
                   transition={{ duration: isAmbientPlaying ? 3 : 6, repeat: Infinity }}
-                  className="absolute inset-0 bg-water/30 rounded-full blur-2xl"
+                  className={`absolute inset-0 bg-water/30 rounded-full ${isMobile ? 'blur-xl' : 'blur-2xl'}`}
+                  style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
                 />
                 {isAmbientPlaying && (
                   <motion.div
-                    animate={{ scale: [1, 1.8], opacity: [0.4, 0] }}
+                    animate={{ scale: isMobile ? [1, 1.5] : [1, 1.8], opacity: [0.4, 0] }}
                     transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
                     className="absolute inset-0 border-2 border-water/40 rounded-full"
+                    style={{ backfaceVisibility: 'hidden', transform: 'translateZ(0)' }}
                   />
                 )}
                 <div className={`relative z-10 w-full h-full flex items-center justify-center bg-white/10 backdrop-blur-sm border rounded-full shadow-lg transition-all ${

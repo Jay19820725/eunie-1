@@ -123,7 +123,7 @@ export const generateAIAnalysis = async (
               }
             }
           },
-          required: ["todayTheme", "cardInterpretation", "psychologicalInsight", "fiveElementAnalysis", "reflection", "actionSuggestion", "pairInterpretations"]
+          required: ["todayTheme", "cardInterpretation", "psychologicalInsight", "fiveElementAnalysis", "reflection", "actionSuggestion"]
         }
       }
     });
@@ -146,12 +146,7 @@ export const generateAIAnalysis = async (
       psychologicalInsight: currentLang === 'ja' ? "現在のあなたは、まるで夜明け前の静寂の中にいるようです。わずかな不安は、新しい光を迎えるための準備にすぎません。" : "當前的妳，宛如置身於黎明前的靜謐。那些微的焦慮，只是為了迎接新光芒而做的準備。",
       fiveElementAnalysis: currentLang === 'ja' ? "エネルギーの起伏は、生命が奏でる美しい旋律です。優勢な要素はあなたを支え、不足している要素は休息の必要性を教えてくれています。" : "能量的起伏是生命奏出的美麗旋律，優勢的元素支撐著妳，不足的元素則在提醒妳休息的必要。",
       reflection: currentLang === 'ja' ? "目を閉じて、自分の鼓動に耳を傾けてみてください。自分に問いかけてみましょう：今の私に、最も必要な「心の抱擁」は何ですか？" : "閉上眼，傾聽自己的心跳，問問自己：現在的我，最需要什麼樣的「心靈擁抱」？",
-      actionSuggestion: currentLang === 'ja' ? "今日は自分のために温かいお茶を淹れ、ただ静かにそこにいてください。あなたは、そのま為で十分に美しいのですから。" : "今天試著為自己泡一杯熱茶，只是靜靜地存在。因為妳，原本就如此美麗。",
-      pairInterpretations: [
-        { pair_id: "0", text: currentLang === 'ja' ? "この組み合わせは、あなたの内なる静けさを物語っています。" : "這個組合述說著妳內心的寧靜。" },
-        { pair_id: "1", text: currentLang === 'ja' ? "エネルギーの調和が、新しい可能性を開いています。" : "能量的調和正開啟新的可能性。" },
-        { pair_id: "2", text: currentLang === 'ja' ? "直感を信じて、一歩踏み出してみましょう。" : "相信直覺，試著踏出一步。" }
-      ]
+      actionSuggestion: currentLang === 'ja' ? "今日は自分のために温かいお茶を淹れ、ただ静かにそこにいてください。あなたは、そのま為で十分に美しいのですから。" : "今天試著為自己泡一杯熱茶，只是靜靜地存在。因為妳，原本就如此美麗。"
     };
   }
 };

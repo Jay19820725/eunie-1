@@ -309,7 +309,7 @@ export const EnergyTimeline: React.FC<EnergyTimelineProps> = ({ onNavigate }) =>
           ) : (
             timelineItems.map((item, i) => (
               <motion.div
-                key={item.type === 'report' ? item.data.id : item.data.id}
+                key={`${item.type}-${item.data.id}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}

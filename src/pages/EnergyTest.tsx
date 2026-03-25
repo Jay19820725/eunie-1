@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTest } from '../store/TestContext';
+import { LuminaBottle } from '../components/ui/LuminaBottle';
 import { Button } from '../components/ui/Button';
 import { Sparkles, ArrowRight, Maximize2, RefreshCw } from 'lucide-react';
 import { ShuffleAnimation } from '../components/ShuffleAnimation';
@@ -174,6 +175,10 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {drawStage === 'revealed' && <LuminaBottle />}
       </AnimatePresence>
 
       <div className="w-full flex flex-col md:flex-row justify-between items-start md:items-end mb-4 md:mb-6 gap-8 md:gap-20 px-4 h-[220.766px] md:h-auto">
@@ -426,13 +431,14 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
               />
             </motion.div>
           ) : (
-            <motion.div 
-              key="reveal"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="w-full max-w-5xl space-y-8 md:space-y-6 px-4"
-            >
+            <>
+              <motion.div 
+                key="reveal"
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="w-full max-w-5xl space-y-8 md:space-y-6 px-4"
+              >
               <motion.div variants={itemVariants} className="text-center space-y-2 mb-8 md:mb-6">
                 <h2 className="text-xl md:text-2xl font-serif">{t('report_revealed_ready')}</h2>
                 <p className="text-xs md:text-sm text-ink-muted">{t('test_revealed_desc')}</p>
@@ -493,6 +499,7 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
                 </button>
               </div>
             </motion.div>
+          </>
           )}
         </AnimatePresence>
       </div>

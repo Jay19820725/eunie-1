@@ -28,6 +28,11 @@ export const translations = {
     dark_mode: "深色模式 (準備中)",
     newsletter: "電子報",
     status_checking: "確認狀態中...",
+    atmosphere_setting: "呼吸效果氛圍",
+    atmosphere_morning: "晨曦 (Morning Glow)",
+    atmosphere_sea: "靜謐深海 (Quiet Sea)",
+    atmosphere_forest: "森林浴 (Forest Bath)",
+    atmosphere_default: "EUNIE 原生",
     
     // Premium Section
     premium_center: "EUNIE 能量中心",
@@ -63,6 +68,18 @@ export const translations = {
     ocean_go_to_test: "前往測試",
     login_required_to_cast: "請先登入後再製作瓶中信。",
     ocean_cast_limit: "字數限制：{count}/100",
+    ocean_no_bottles: "目前海洋很平靜，暫時沒有新的訊息了。",
+    ocean_select_tag: "選擇祝福標籤",
+    tag_peace: "平安健康",
+    tag_success: "順心如意",
+    tag_wealth: "財源廣進",
+    tag_career: "事業有成",
+    tag_study: "學業進步",
+    tag_love: "感情美滿",
+    tag_family: "家庭和睦",
+    tag_luck: "萬事大吉",
+    tag_wish: "心想事成",
+    tag_blessing: "福氣滿滿",
     
     // Home Page
     home_top_slogan: "EUNIE 嶼妳 — 懂妳的能量，平衡妳的生活",
@@ -282,6 +299,11 @@ export const translations = {
     loop_completion_title: "今日能量閉環已達成",
     loop_completion_desc: "校準、共鳴、沈澱。妳在今日完成了與自己、與世界的溫柔連結。帶著這份平靜的能量，祝妳好夢。",
     loop_completion_btn: "度過了美好的一天",
+    
+    // Auth Prompt
+    auth_prompt_title: "開啟靈魂之旅",
+    auth_prompt_desc: "為了保存您的能量報告並開啟每日成長追蹤，請先登入您的專屬空間。",
+    auth_prompt_login_btn: "開啟靈魂之旅 (Google 登入)",
   },
   ja: {
     // General
@@ -312,6 +334,11 @@ export const translations = {
     dark_mode: "ダークモード (準備中)",
     newsletter: "ニュースレター",
     status_checking: "ステータスを確認中....",
+    atmosphere_setting: "呼吸エフェクトの雰囲気",
+    atmosphere_morning: "晨曦 (Morning Glow)",
+    atmosphere_sea: "静謐な深海 (Quiet Sea)",
+    atmosphere_forest: "森林浴 (Forest Bath)",
+    atmosphere_default: "EUNIE オリジナル",
     
     // Premium Section
     premium_center: "Premium エネルギーセンター",
@@ -347,6 +374,18 @@ export const translations = {
     ocean_go_to_test: "診断へ行く",
     login_required_to_cast: "瓶中信を作るにはログインが必要です。",
     ocean_cast_limit: "文字数制限：{count}/100",
+    ocean_no_bottles: "現在、海は穏やかです。新しいメッセージはまだありません。",
+    ocean_select_tag: "祝福タグを選択",
+    tag_peace: "平穏無事",
+    tag_success: "思い通り",
+    tag_wealth: "金運上昇",
+    tag_career: "仕事成就",
+    tag_study: "学業成就",
+    tag_love: "恋愛成就",
+    tag_family: "家庭円満",
+    tag_luck: "万事大吉",
+    tag_wish: "願望成就",
+    tag_blessing: "福徳円満",
 
     // Home Page
     home_top_slogan: "EUNIE 嶼妳 — あなたのエネルギーを知り、生活を整える",
@@ -567,6 +606,11 @@ export const translations = {
     loop_completion_title: "今日のエネルギー閉環が完了しました",
     loop_completion_desc: "校準、共鳴、そして沈殿。あなたは今日、自分自身と世界との美しい調和を成し遂げました。この穏やかなエネルギーを抱いて、良い夢を。",
     loop_completion_btn: "素晴らしい一日でした",
+    
+    // Auth Prompt
+    auth_prompt_title: "魂の旅を始める",
+    auth_prompt_desc: "エネルギーレポートを保存し、日々の成長を追蹤するために、まずは専用スペースにサインインしてください。",
+    auth_prompt_login_btn: "魂の旅を始める (Googleでサインイン)",
   }
 };
 

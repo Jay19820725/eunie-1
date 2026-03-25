@@ -108,14 +108,30 @@
         "id": { "type": "string" },
         "user_id": { "type": "string" },
         "content": { "type": "string" },
+        "tag_id": { "type": "string", "description": "ID of the selected blessing tag" },
         "element": { "type": "string" },
         "energy_color_tag": { "type": "string", "description": "Energy color associated with the bottle" },
+        "report_id": { "type": "integer", "description": "Unique report ID per bottle" },
+        "translated_content": { "type": "string", "description": "Cached translation" },
         "hug_count": { "type": "integer", "description": "Number of energy hugs received" },
         "lang": { "type": "string" },
         "is_active": { "type": "boolean" },
         "created_at": { "type": "string", "format": "date-time" }
       },
       "required": ["user_id", "content", "created_at"]
+    },
+    "BottleTag": {
+      "title": "BottleTag",
+      "description": "Predefined blessing tags for bottles",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "zh": { "type": "string" },
+        "ja": { "type": "string" },
+        "order": { "type": "integer" },
+        "is_active": { "type": "boolean" }
+      },
+      "required": ["zh", "ja"]
     }
   },
   "firestore": {
@@ -134,6 +150,10 @@
     "bottles/{bottleId}": {
       "schema": "Bottle",
       "description": "Ocean bottles"
+    },
+    "bottle_tags/{tagId}": {
+      "schema": "BottleTag",
+      "description": "Predefined blessing tags"
     }
   }
 }

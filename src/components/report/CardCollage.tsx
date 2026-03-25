@@ -23,7 +23,7 @@ export const CardCollage: React.FC<CardCollageProps> = ({ report, displayContent
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 md:gap-16">
         {[0, 1, 2].map((i) => {
-          const interp = displayContent.pairInterpretations?.find((p: any) => p.pair_id === i.toString());
+          const interp = displayContent.pairInterpretations?.[i];
           const pair = (report.pairs && report.pairs.length > i) ? report.pairs[i] : selectedCards.pairs?.[i];
           
           if (!pair) return null;

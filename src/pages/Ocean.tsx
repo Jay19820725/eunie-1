@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Waves, Send, Sparkles, X, Heart, Eye, Navigation, Volume2, VolumeX } from 'lucide-react';
+import { Waves, Send, Sparkles, X, Heart, Eye, Navigation } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useLanguage } from '../i18n/LanguageContext';
 import { aiService } from '../services/aiService';
@@ -32,6 +32,7 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
   const [isTranslating, setIsTranslating] = useState(false);
   const [isBlessing, setIsBlessing] = useState(false);
   const [isHugging, setIsHugging] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
   const [isCastModalOpen, setIsCastModalOpen] = useState(false);
   const [showResonanceSuccess, setShowResonanceSuccess] = useState(false);
@@ -39,24 +40,29 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
   // Ambient Sound State
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isAmbientPlaying, setIsAmbientPlaying] = useState(false);
-  const [showAmbientPrompt, setShowAmbientPrompt] = useState(false);
+  const [showSoundGuide, setShowSoundGuide] = useState(false);
+  const hasInteractedRef = useRef(false);
 
   useEffect(() => {
-    // Check if prompt has been seen
-    const hasSeenPrompt = localStorage.getItem('oceanAmbientPromptSeen');
-    if (!hasSeenPrompt) {
-      const timer = setTimeout(() => setShowAmbientPrompt(true), 2000);
-      return () => clearTimeout(timer);
-    }
+    const timer = setTimeout(() => {
+      setShowSoundGuide(true);
+      // Auto-hide after 8 seconds
+      setTimeout(() => setShowSoundGuide(false), 8000);
+    }, 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
-    // Auto-hide prompt after 10 seconds
-    if (showAmbientPrompt) {
-      const timer = setTimeout(() => setShowAmbientPrompt(false), 10000);
-      return () => clearTimeout(timer);
-    }
-  }, [showAmbientPrompt]);
+    const handleFirstInteraction = () => {
+      if (!hasInteractedRef.current) {
+        hasInteractedRef.current = true;
+        setIsAmbientPlaying(true);
+      }
+      window.removeEventListener('click', handleFirstInteraction);
+    };
+    window.addEventListener('click', handleFirstInteraction, { once: true });
+    return () => window.removeEventListener('click', handleFirstInteraction);
+  }, []);
 
   useEffect(() => {
     // Initialize ambient audio
@@ -83,8 +89,8 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
       let vol = 0;
       const interval = setInterval(() => {
         vol += 0.02;
-        if (vol >= 0.4) {
-          vol = 0.4;
+        if (vol >= 0.3) {
+          vol = 0.3;
           clearInterval(interval);
         }
         if (ambientAudioRef.current) ambientAudioRef.current.volume = vol;
@@ -169,6 +175,7 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
 
   const handleSaveBottle = async (bottleId: string, replyMessage: string) => {
     if (!profile) return;
+    setIsSaving(true);
     try {
       const res = await fetch(`/api/bottles/${bottleId}/save`, {
         method: 'POST',
@@ -176,18 +183,20 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
         body: JSON.stringify({ userId: profile.uid, replyMessage })
       });
       
+      const data = await res.json();
+
       if (!res.ok) {
-        let errorData;
-        try {
-          errorData = await res.json();
-        } catch (e) {
-          errorData = { error: 'Unknown server error' };
+        if (data.code === 'REPLY_COOLDOWN') {
+          const err = new Error(data.error);
+          (err as any).code = 'REPLY_COOLDOWN';
+          (err as any).remainingHours = data.remainingHours;
+          throw err;
         }
         
-        if (errorData.code === 'LIMIT_EXCEEDED' || errorData.error?.includes('limit')) {
+        if (data.code === 'LIMIT_EXCEEDED' || data.error?.includes('limit')) {
           alert(t('ocean_save_limit_error'));
         } else {
-          throw new Error(errorData.error || 'Failed to save');
+          throw new Error(data.error || 'Failed to save');
         }
       } else {
         // Refresh saved bottles
@@ -196,6 +205,9 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
       }
     } catch (err) {
       console.error('Failed to save bottle:', err);
+      throw err; // Re-throw to be caught by the modal
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -242,7 +254,7 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
         }
       } else {
         // No bottles found or error
-        alert(t('ocean.no_bottles') || 'Ocean is calm today...');
+        alert(t('ocean_no_bottles'));
       }
     } catch (err) {
       console.error(err);
@@ -253,10 +265,27 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
     if (!pickedBottle || isTranslating) return;
     
     setIsTranslating(true);
-    const targetLang = language === 'ja' ? 'ja' : 'zh';
-    const translation = await aiService.translateBottle(pickedBottle.content, targetLang);
-    setTranslatedContent(translation);
-    setIsTranslating(false);
+    try {
+      const targetLang = language === 'ja' ? 'ja' : 'zh';
+      const res = await fetch(`/api/bottles/${pickedBottle.id}/translate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetLang })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setTranslatedContent(data.translatedContent);
+      } else {
+        // Fallback to old service if API fails
+        const translation = await aiService.translateBottle(pickedBottle.content, targetLang);
+        setTranslatedContent(translation);
+      }
+    } catch (err) {
+      console.error("Translation error:", err);
+    } finally {
+      setIsTranslating(false);
+    }
   };
 
   const sendBlessing = async (tagId: string) => {
@@ -353,19 +382,6 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
             {language === 'zh' ? '我的航程' : '私の航海'}
           </button>
         </div>
-
-        {/* Ambient Sound Toggle */}
-        <button
-          onClick={() => setIsAmbientPlaying(!isAmbientPlaying)}
-          className={`p-3 rounded-full backdrop-blur-md border transition-all ${
-            isAmbientPlaying 
-              ? 'bg-water/20 border-water/40 text-water shadow-lg' 
-              : 'bg-white/10 border-white/10 text-white/40 hover:text-white/60'
-          }`}
-          title={language === 'zh' ? '海浪聲' : '波の音'}
-        >
-          {isAmbientPlaying ? <Volume2 size={16} /> : <VolumeX size={16} />}
-        </button>
       </div>
 
       <div className="z-10 text-center px-6 w-full max-w-4xl flex-1 flex flex-col justify-center">
@@ -376,16 +392,62 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col items-center mb-[100px] md:mt-0 md:mb-[200px]"
             >
-              <div className="w-24 h-24 mb-8 relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsAmbientPlaying(!isAmbientPlaying);
+                }}
+                className="w-24 h-24 mb-8 relative group outline-none cursor-pointer"
+              >
                 <motion.div
-                  animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
-                  transition={{ duration: 4, repeat: Infinity }}
-                  className="absolute inset-0 bg-water/20 rounded-full blur-2xl"
+                  animate={isAmbientPlaying ? { 
+                    scale: [1, 1.4, 1], 
+                    opacity: [0.2, 0.5, 0.2] 
+                  } : { 
+                    scale: [1, 1.1, 1], 
+                    opacity: [0.1, 0.2, 0.1] 
+                  }}
+                  transition={{ duration: isAmbientPlaying ? 3 : 6, repeat: Infinity }}
+                  className="absolute inset-0 bg-water/30 rounded-full blur-2xl"
                 />
-                <div className="relative z-10 w-full h-full flex items-center justify-center bg-white/10 backdrop-blur-sm border border-white/20 rounded-full shadow-lg">
-                  <Waves className="w-10 h-10 text-white" />
+                {isAmbientPlaying && (
+                  <motion.div
+                    animate={{ scale: [1, 1.8], opacity: [0.4, 0] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeOut" }}
+                    className="absolute inset-0 border-2 border-water/40 rounded-full"
+                  />
+                )}
+                <div className={`relative z-10 w-full h-full flex items-center justify-center bg-white/10 backdrop-blur-sm border rounded-full shadow-lg transition-all ${
+                  isAmbientPlaying ? 'border-water/40 bg-water/5' : 'border-white/20'
+                }`}>
+                  <Waves className={`w-10 h-10 transition-colors ${isAmbientPlaying ? 'text-water' : 'text-white'}`} />
                 </div>
-              </div>
+
+                {/* Sound Guidance Tooltip */}
+                <AnimatePresence>
+                  {showSoundGuide && !isAmbientPlaying && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowSoundGuide(false);
+                      }}
+                      className="absolute -top-16 left-1/2 -translate-x-1/2 w-max px-4 py-2 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl cursor-pointer z-50"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-water rounded-full animate-pulse" />
+                        <span className="text-[10px] text-white/80 tracking-widest uppercase font-medium">
+                          {language === 'zh' ? '點擊開啟海浪聲，沉浸於此' : '波の音を聴きながら、没入しましょう'}
+                        </span>
+                      </div>
+                      {/* Triangle pointer */}
+                      <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white/10 border-r border-b border-white/20 rotate-45 backdrop-blur-xl" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </button>
               
               <h1 className="text-3xl font-serif font-bold text-white mb-4 tracking-widest">
                 {language === 'zh' ? '共鳴之海' : '共鳴の海'}
@@ -511,7 +573,7 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
 
                     return (
                       <motion.div
-                        key={bottle.id || index}
+                        key={`my-bottle-${bottle.id || index}-${index}`}
                         layout
                         onClick={() => {
                           markAsRead(bottle.id);
@@ -618,7 +680,7 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
 
                     return (
                       <motion.div
-                        key={bottle.saved_id || `${bottle.id}-${index}`}
+                        key={`saved-bottle-${bottle.saved_id || bottle.id}-${index}`}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         className="group relative bg-white/10 backdrop-blur-md border border-white/10 rounded-3xl p-6 transition-all hover:border-white/20 shadow-lg"
@@ -748,48 +810,11 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
             isTranslating={isTranslating}
             isBlessing={isBlessing}
             isHugging={isHugging}
+            isSaving={isSaving}
             tags={tags}
             isSaved={!!pickedBottle.saved_id}
             isOwnBottle={profile?.uid === pickedBottle.user_id}
           />
-        )}
-      </AnimatePresence>
-
-      {/* Ambient Sound Prompt Toast */}
-      <AnimatePresence>
-        {showAmbientPrompt && (
-          <motion.div
-            initial={{ opacity: 0, x: 20, y: 20 }}
-            animate={{ opacity: 1, x: 0, y: 0 }}
-            exit={{ opacity: 0, x: 20, y: 20 }}
-            className="fixed bottom-32 right-6 z-[60] flex items-center gap-4 bg-white/10 backdrop-blur-2xl border border-white/20 p-4 rounded-3xl shadow-2xl"
-          >
-            <div className="w-10 h-10 rounded-full bg-water/20 flex items-center justify-center text-water shrink-0">
-              <Waves size={20} />
-            </div>
-            <div className="flex flex-col min-w-[140px]">
-              <span className="text-xs text-white font-medium">聽見大海的聲音？</span>
-              <button 
-                onClick={() => {
-                  setIsAmbientPlaying(true);
-                  setShowAmbientPrompt(false);
-                  localStorage.setItem('oceanAmbientPromptSeen', 'true');
-                }}
-                className="text-[10px] text-water hover:text-water/80 transition-colors uppercase tracking-widest font-bold mt-1 text-left"
-              >
-                點擊開啟環境音效
-              </button>
-            </div>
-            <button 
-              onClick={() => {
-                setShowAmbientPrompt(false);
-                localStorage.setItem('oceanAmbientPromptSeen', 'true');
-              }}
-              className="p-2 hover:bg-white/5 rounded-full transition-colors"
-            >
-              <X size={14} className="text-white/40" />
-            </button>
-          </motion.div>
         )}
       </AnimatePresence>
     </div>
