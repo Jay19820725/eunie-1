@@ -30,10 +30,32 @@ interface SoundscapeContextType {
 const SoundscapeContext = createContext<SoundscapeContextType | undefined>(undefined);
 
 export const SoundscapeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(() => {
+    const saved = localStorage.getItem('eunie_audio_playing');
+    return saved === 'true';
+  });
   const [currentSound, setCurrentSound] = useState<Soundscape | null>(null);
-  const [volume, setVolume] = useState(0.5);
-  const [playbackMode, setPlaybackMode] = useState<PlaybackMode>('list');
+  const [volume, setVolume] = useState(() => {
+    const saved = localStorage.getItem('eunie_audio_volume');
+    return saved ? parseFloat(saved) : 0.5;
+  });
+  const [playbackMode, setPlaybackMode] = useState<PlaybackMode>(() => {
+    const saved = localStorage.getItem('eunie_audio_mode') as PlaybackMode;
+    return saved || 'list';
+  });
+
+  // Persist settings to localStorage
+  useEffect(() => {
+    localStorage.setItem('eunie_audio_playing', isPlaying.toString());
+  }, [isPlaying]);
+
+  useEffect(() => {
+    localStorage.setItem('eunie_audio_volume', volume.toString());
+  }, [volume]);
+
+  useEffect(() => {
+    localStorage.setItem('eunie_audio_mode', playbackMode);
+  }, [playbackMode]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const tracksRef = useRef<Soundscape[]>([]);
   const currentSoundRef = useRef<Soundscape | null>(null);

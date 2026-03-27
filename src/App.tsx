@@ -1,5 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Navigation } from './components/layout/Navigation';
 import { LuminaBottle } from './components/ui/LuminaBottle';
 import { PurchaseModal } from './components/PurchaseModal';
@@ -236,8 +236,10 @@ function AppContent() {
 
 export default function App() {
   return (
-    <SoundscapeProvider>
-      <AppContent />
-    </SoundscapeProvider>
+    <BrowserRouter>
+      <SoundscapeProvider>
+        <AppContent />
+      </SoundscapeProvider>
+    </BrowserRouter>
   );
 }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Globe, Languages, Heart, Clock, MapPin, Sparkles } from 'lucide-react';
+import { X, Globe, Languages, Heart, Clock, MapPin, Sparkles, AlertCircle } from 'lucide-react';
 import { Bottle, BottleTag } from '../../core/types';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { LUMINA_CARDS } from '../../core/cards';
@@ -17,6 +17,7 @@ interface BottleDetailModalProps {
   isTranslating: boolean;
   isBlessing: boolean;
   isHugging?: boolean;
+  isSaving?: boolean;
   tags: BottleTag[];
   isSaved?: boolean;
   isOwnBottle?: boolean;
@@ -33,6 +34,7 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
   isTranslating,
   isBlessing,
   isHugging = false,
+  isSaving = false,
   tags,
   isSaved = false,
   isOwnBottle = false
@@ -41,6 +43,8 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [replyMessage, setReplyMessage] = useState('');
   const [showSaveConfirm, setShowSaveConfirm] = useState(false);
+  const [cooldownRemaining, setCooldownRemaining] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   // Calculate travel time
   const travelTime = useMemo(() => {
@@ -141,12 +145,22 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (onSave && activeBottle) {
-      onSave(activeBottle.id, replyMessage);
+      try {
+        setError(null);
+        await onSave(activeBottle.id, replyMessage);
+        setShowSaveConfirm(false);
+        onClose();
+      } catch (err: any) {
+        if (err.code === 'REPLY_COOLDOWN') {
+          setCooldownRemaining(err.remainingHours);
+          setError(err.message);
+        } else {
+          setError(err.message || 'Failed to save bottle');
+        }
+      }
     }
-    setShowSaveConfirm(false);
-    onClose();
   };
 
   const modalContent = (
@@ -247,6 +261,14 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                         </span>
                       </div>
                     )}
+                    {(activeBottle.tag_zh || activeBottle.tag_ja) && (
+                      <div className="flex items-center gap-2 text-water">
+                        <Heart size={14} className="fill-water" />
+                        <span className="text-[10px] tracking-[0.2em] uppercase font-bold">
+                          {language === 'ja' ? activeBottle.tag_ja : activeBottle.tag_zh}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -341,13 +363,13 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                   <div className="flex flex-wrap gap-3">
                     {tags.slice(0, 4).map((tag, index) => (
                       <button
-                        key={tag.id || index}
+                        key={`tag-${tag.id || index}-${index}`}
                         onClick={() => onBless(tag.id)}
                         disabled={isBlessing}
                         className="group py-2.5 px-5 rounded-full border border-ink/10 text-[11px] text-ink/40 hover:bg-water hover:text-white hover:border-water transition-all flex items-center gap-2 uppercase tracking-[0.1em] font-medium"
                       >
                         <Heart size={12} className="group-hover:scale-110 transition-transform" />
-                        {language === 'ja' ? tag.text_ja : tag.text_zh}
+                        {language === 'ja' ? tag.ja : tag.zh}
                       </button>
                     ))}
                     
@@ -395,12 +417,20 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                 <p className="text-sm text-ink/40 leading-relaxed">
                   {t('ocean_save_confirm_desc')}
                 </p>
+                {error && (
+                  <div className="p-3 bg-rose-50 rounded-xl text-rose-600 text-[10px] font-medium flex items-center gap-2 justify-center">
+                    <AlertCircle size={12} />
+                    {error}
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-3">
                 <button
                   onClick={handleSave}
-                  className="w-full py-4 bg-water text-white rounded-full text-xs tracking-[0.2em] font-bold uppercase hover:bg-water/90 transition-colors"
+                  disabled={isSaving}
+                  className="w-full py-4 bg-water text-white rounded-full text-xs tracking-[0.2em] font-bold uppercase hover:bg-water/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
+                  {isSaving && <div className="w-3 h-3 border-2 border-white/20 border-t-white rounded-full animate-spin" />}
                   {t('ocean_save_confirm_btn')}
                 </button>
                 <button

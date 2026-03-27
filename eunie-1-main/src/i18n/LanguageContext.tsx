@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { translations, Language, TranslationKey } from './translations';
+import { useAuthContext } from '../store/AuthContext';
 
 interface LanguageContextType {
   language: Language;
@@ -12,21 +13,28 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>('zh');
   const [fontSettings, setFontSettings] = useState<any>(null);
+  const { profile } = useAuthContext();
 
   useEffect(() => {
-    // 1. Check localStorage
+    // 1. Check user profile (synced)
+    if (profile?.language && (profile.language === 'zh' || profile.language === 'ja')) {
+      setLanguageState(profile.language as Language);
+      return;
+    }
+
+    // 2. Check localStorage
     const savedLang = localStorage.getItem('user-language') as Language;
     if (savedLang && (savedLang === 'zh' || savedLang === 'ja')) {
       setLanguageState(savedLang);
     } else {
-      // 2. Auto-detect from system
+      // 3. Auto-detect from system
       const systemLang = navigator.language.toLowerCase();
       if (systemLang.startsWith('ja')) {
         setLanguageState('ja');
       } else if (systemLang.startsWith('zh')) {
         setLanguageState('zh');
       } else {
-        // 3. Default to Chinese if not Chinese or Japanese
+        // 4. Default to Chinese if not Chinese or Japanese
         setLanguageState('zh');
       }
     }
@@ -38,7 +46,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setFontSettings(data);
       })
       .catch(err => console.error('Failed to fetch font settings:', err));
-  }, []);
+  }, [profile?.language]);
 
   useEffect(() => {
     if (!fontSettings || !fontSettings[language]) return;
@@ -71,6 +79,15 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('user-language', lang);
+    
+    // Sync to backend if logged in
+    if (profile?.uid) {
+      fetch(`/api/users/${profile.uid}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: lang })
+      }).catch(err => console.error("Error syncing language:", err));
+    }
   };
 
   const t = (key: TranslationKey): string => {

@@ -15,24 +15,76 @@ import { CastBottleModal } from '../components/ocean/CastBottleModal';
 const WeavingLoader: React.FC<{ label?: string }> = ({ label }) => {
   const { t } = useLanguage();
   const displayLabel = label || t('report_weaving');
+  const [progress, setProgress] = React.useState(0);
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setProgress((prev) => {
+        if (prev >= 100) {
+          clearInterval(timer);
+          return 100;
+        }
+        return prev + 2; // slowly increment
+      });
+    }, 100);
+    return () => clearInterval(timer);
+  }, []);
+
   return (
-    <div className="flex flex-col items-center justify-center py-24 space-y-8">
-      <div className="relative w-12 h-12">
+    <div className="flex flex-col items-center justify-center py-24 space-y-10">
+      <div className="relative w-24 h-24 flex items-center justify-center">
+        {/* Background Ring */}
+        <div className="absolute inset-0 rounded-full border-2 border-ink/5" />
+        {/* Progress Ring */}
+        <svg className="absolute inset-0 w-full h-full -rotate-90">
+          <circle
+            cx="48"
+            cy="48"
+            r="46"
+            stroke="currentColor"
+            strokeWidth="2"
+            fill="transparent"
+            className="text-ink/20 transition-all duration-300 ease-out"
+            strokeDasharray="289"
+            strokeDashoffset={289 - (289 * progress) / 100}
+          />
+        </svg>
+        
+        {/* Inner Spinner */}
         <motion.div 
           animate={{ rotate: 360 }}
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-          className="absolute inset-0 border border-ink/5 border-t-ink/40 rounded-full"
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-[0.5px] border-ink/10 border-t-ink/30 rounded-full"
         />
+        <div className="absolute text-[10px] font-mono text-ink/40 tracking-widest">{progress}%</div>
       </div>
-      <span className="text-[10px] uppercase tracking-[0.8em] text-ink/20 animate-pulse">{displayLabel}</span>
+      
+      <div className="text-center space-y-3">
+        <span className="text-[11px] uppercase tracking-[0.8em] text-ink/40 block animate-pulse">
+          {displayLabel}
+        </span>
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={progress < 30 ? 'p1' : progress < 70 ? 'p2' : 'p3'}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -5 }}
+            className="text-[9px] text-ink/20 tracking-widest uppercase font-light"
+          >
+            {progress < 30 ? "Connecting to resonance..." : progress < 70 ? "Aligning five elements..." : "Weaving your soul reading..."}
+          </motion.p>
+        </AnimatePresence>
+      </div>
     </div>
   );
 };
 
+import { LoopStage } from '../core/types';
+
 export const EnergyReport: React.FC<{ 
   onReset: () => void;
   onNavigate: (page: string) => void;
-  loopStage: string;
+  loopStage: LoopStage;
 }> = ({ onReset, onNavigate, loopStage }) => {
   const { selectedCards } = useTest();
   const { t } = useLanguage();
@@ -274,7 +326,7 @@ export const EnergyReport: React.FC<{
           <div className="grid grid-cols-4 gap-3">
             {(report.pairs ? report.pairs.flatMap(p => [p.image, p.word]) : [...selectedCards.images, ...selectedCards.words]).map((card, i) => (
               <button
-                key={card.id}
+                key={`${card.id}-${i}`}
                 onClick={() => handleSelectThumbnail(card.imageUrl)}
                 className={`relative aspect-[3/4] rounded-xl overflow-hidden border-2 transition-all ${
                   selectedShareThumbnail === card.imageUrl 

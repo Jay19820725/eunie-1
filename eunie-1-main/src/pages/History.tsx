@@ -59,6 +59,21 @@ export const History: React.FC<HistoryProps> = ({ onNavigate }) => {
     return map[el] || el;
   };
 
+  const getCategoryLabel = (report: AnalysisReport) => {
+    if (report.reportType !== 'wish' || !report.wishContext) {
+      return language === 'ja' ? '日常の記録' : '日常校準';
+    }
+    const cat = report.wishContext.category;
+    const catMap: Record<string, string> = {
+      career: language === 'ja' ? 'キャリア' : '職涯',
+      love: language === 'ja' ? '恋愛' : '感情',
+      health: language === 'ja' ? '健康' : '健康',
+      wealth: language === 'ja' ? '豊かさ' : '財富',
+      other: language === 'ja' ? 'その他' : '其他'
+    };
+    return catMap[cat] || (language === 'ja' ? '悩み' : '煩惱');
+  };
+
   if (loading) {
     return (
       <div className="ma-container py-32 flex items-center justify-center">
@@ -119,9 +134,17 @@ export const History: React.FC<HistoryProps> = ({ onNavigate }) => {
                     
                     <div className="h-8 md:h-12 w-px bg-ink/5 hidden sm:block" />
                     
-                    <div className="text-right sm:text-left">
-                      <span className="text-[10px] uppercase tracking-widest text-ink-muted block mb-1">優位な要素</span>
-                      <span className="text-lg md:text-xl font-serif capitalize">{translateElement(report.dominant_element)}</span>
+                    <div className="text-right sm:text-left flex flex-col justify-center gap-1">
+                      <span className={`text-[8px] uppercase tracking-[0.2em] font-medium border px-2 py-0.5 rounded-full w-fit ${
+                        report.reportType === 'wish' 
+                          ? 'border-purple-200 text-purple-600 bg-purple-50' 
+                          : 'border-blue-200 text-blue-600 bg-blue-50'
+                      }`}>
+                        {getCategoryLabel(report)}
+                      </span>
+                      <span className="text-lg md:text-xl font-serif capitalize mt-1">
+                        {translateElement(report.dominant_element)}
+                      </span>
                     </div>
                   </div>
 

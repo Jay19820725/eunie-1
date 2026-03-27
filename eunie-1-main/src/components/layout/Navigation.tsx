@@ -79,8 +79,8 @@ export const Navigation: React.FC<NavigationProps> = ({ currentPath, onNavigate 
   
   const allItems = [
     { path: 'home', label: t('nav_home'), icon: Home },
-    { path: 'ocean', label: t('nav_ocean'), icon: Waves, stage: 'resonance' },
-    { path: 'history', label: t('nav_history'), icon: History, stage: 'reflection' },
+    { path: 'ocean', label: t('nav_ocean'), icon: Waves },
+    { path: 'history', label: t('nav_history'), icon: History },
     { path: 'profile', label: t('nav_profile'), icon: User },
   ];
 

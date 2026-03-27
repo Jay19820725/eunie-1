@@ -7,6 +7,7 @@ import { AuthProvider } from './store/AuthContext';
 import { TestProvider } from './store/TestContext';
 import { LanguageProvider } from './i18n/LanguageContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { BrowserRouter } from 'react-router-dom';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,13 +23,15 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <LanguageProvider>
+      <BrowserRouter>
         <AuthProvider>
-          <TestProvider>
-            <App />
-          </TestProvider>
+          <LanguageProvider>
+            <TestProvider>
+              <App />
+            </TestProvider>
+          </LanguageProvider>
         </AuthProvider>
-      </LanguageProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   </StrictMode>,
 );

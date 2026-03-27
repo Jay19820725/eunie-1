@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { ImageCard, WordCard, SelectedCards, AnalysisReport, CardPair, ReportType, WishContext, FiveElementValues } from '../core/types';
+import { ImageCard, WordCard, SelectedCards, AnalysisReport, CardPair } from '../core/types';
 import { EnergyEngine } from '../core/engine';
 import { auth } from '../lib/firebase';
 import { performEunieDraw } from '../services/cardEngine';
@@ -10,12 +10,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 interface TestContextType {
   selectedCards: SelectedCards;
   setSelectedCards: React.Dispatch<React.SetStateAction<SelectedCards>>;
-  reportType: ReportType;
-  setReportType: (type: ReportType) => void;
-  wishContext: WishContext;
-  setWishContext: (context: Partial<WishContext>) => void;
   currentStep: number;
-  setCurrentStep: (step: number) => void;
   isCompleted: boolean;
   isDrawing: boolean;
   report: AnalysisReport | null;
@@ -35,18 +30,7 @@ interface TestContextType {
 const TestContext = createContext<TestContextType | undefined>(undefined);
 
 export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [reportType, setReportType] = useState<ReportType>('daily');
-  const [wishContext, setWishContextState] = useState<WishContext>({
-    domains: [],
-    targets: {},
-    contents: {}
-  });
-  const [selectedCards, setSelectedCards] = useState<SelectedCards>({ 
-    images: [], 
-    words: [], 
-    drawnAt: 0,
-    reportType: 'daily'
-  });
+  const [selectedCards, setSelectedCards] = useState<SelectedCards>({ images: [], words: [], drawnAt: 0 });
   const [currentStep, setCurrentStep] = useState(0);
   const [isCompleted, setIsCompleted] = useState(false);
   const [report, setReport] = useState<AnalysisReport | null>(null);
@@ -79,9 +63,7 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUserPoints(0);
         setIsFirstPurchase(true);
         setReport(null);
-        setReportType('daily');
-        setWishContextState({ domains: [], targets: {}, contents: {} });
-        setSelectedCards({ images: [], words: [], drawnAt: 0, reportType: 'daily' });
+        setSelectedCards({ images: [], words: [], drawnAt: 0 });
         setCurrentStep(0);
         setIsCompleted(false);
       }
@@ -89,20 +71,13 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return () => unsubscribe();
   }, [fetchUserPoints]);
 
-  const setWishContext = useCallback((context: Partial<WishContext>) => {
-    setWishContextState(prev => ({ ...prev, ...context }));
-  }, []);
-
-  const startDraw = useCallback(async (type?: ReportType, context?: WishContext) => {
+  const startDraw = useCallback(async () => {
     setIsDrawing(true);
-    const activeType = type || reportType;
-    const activeContext = context || wishContext;
-    
     try {
       const user = auth.currentUser;
       if (user) {
         // If user is logged in, use the new drawSession service to persist the draw
-        const drawPromise = drawSession(user.uid, language, activeType, activeContext);
+        const drawPromise = drawSession(user.uid, language);
         const timeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error("API timeout")), 8000)
         );
@@ -111,8 +86,6 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const { sessionId, imageCards, wordCards } = await Promise.race([drawPromise, timeoutPromise]) as any;
           setSelectedCards({
             sessionId,
-            reportType: activeType,
-            wishContext: activeContext,
             images: imageCards,
             words: wordCards,
             drawnAt: Date.now()
@@ -120,20 +93,12 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } catch (err) {
           console.warn("API draw session failed or timed out, falling back to local draw:", err);
           const draw = await performEunieDraw(language);
-          setSelectedCards({
-            ...draw,
-            reportType: activeType,
-            wishContext: activeContext
-          });
+          setSelectedCards(draw);
         }
       } else {
         // Fallback for guest users
         const draw = await performEunieDraw(language);
-        setSelectedCards({
-          ...draw,
-          reportType: activeType,
-          wishContext: activeContext
-        });
+        setSelectedCards(draw);
       }
       setCurrentStep(1);
     } catch (error) {
@@ -141,7 +106,7 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsDrawing(false);
     }
-  }, [language, reportType, wishContext]);
+  }, [language]);
 
   const setPairs = useCallback((pairs: CardPair[]) => {
     setSelectedCards(prev => ({ ...prev, pairs }));
@@ -167,9 +132,7 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const resetTest = useCallback(() => {
-    setSelectedCards({ images: [], words: [], drawnAt: 0, reportType: 'daily' });
-    setReportType('daily');
-    setWishContextState({ domains: [], targets: {}, contents: {} });
+    setSelectedCards({ images: [], words: [], drawnAt: 0 });
     setCurrentStep(0);
     setIsCompleted(false);
     setReport(null);
@@ -216,8 +179,6 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const initialReport: AnalysisReport = {
         id: reportId,
         timestamp: Date.now(),
-        reportType: selectedCards.reportType,
-        wishContext: selectedCards.wishContext,
         interpretation: "正在編織 AI 深度引導報告...",
         ...analysis,
         selectedImageIds: selectedCards.images.map(img => img.id),
@@ -249,44 +210,8 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // 3. Background AI Analysis & Cloud Sync (Non-blocking)
       const runBackgroundTasks = async () => {
         try {
-          const user = auth.currentUser;
-          let historicalScores: FiveElementValues | undefined = undefined;
-
-          if (user) {
-            try {
-              const res = await fetch(`/api/reports/${user.uid}?lang=${language}`);
-              if (res.ok) {
-                const data = await res.json();
-                const reports = data.reports as AnalysisReport[];
-                if (reports && reports.length > 0) {
-                  const lastReports = reports.slice(0, 10);
-                  const totals = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
-                  lastReports.forEach(r => {
-                    if (r.totalScores) {
-                      totals.wood += r.totalScores.wood || 0;
-                      totals.fire += r.totalScores.fire || 0;
-                      totals.earth += r.totalScores.earth || 0;
-                      totals.metal += r.totalScores.metal || 0;
-                      totals.water += r.totalScores.water || 0;
-                    }
-                  });
-                  const count = lastReports.length;
-                  historicalScores = {
-                    wood: totals.wood / count,
-                    fire: totals.fire / count,
-                    earth: totals.earth / count,
-                    metal: totals.metal / count,
-                    water: totals.water / count
-                  };
-                }
-              }
-            } catch (err) {
-              console.warn("Failed to fetch historical scores:", err);
-            }
-          }
-
           // Get AI Analysis
-          const aiAnalysis = await generateAIAnalysis(selectedCards, analysis.totalScores, language, historicalScores);
+          const aiAnalysis = await generateAIAnalysis(selectedCards, analysis.totalScores, language);
           
           const finalReport: AnalysisReport = {
             ...initialReport,
@@ -308,8 +233,6 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   id: data.id,
                   userId: userId,
                   lang: language, // Added language tag
-                  reportType: data.reportType,
-                  wishContext: data.wishContext,
                   dominantElement: data.dominantElement,
                   weakElement: data.weakElement,
                   balanceScore: data.balanceScore,
@@ -377,8 +300,6 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
           body: JSON.stringify({
             id: reportData.id,
             userId: userId,
-            reportType: reportData.reportType,
-            wishContext: reportData.wishContext,
             dominantElement: reportData.dominantElement,
             weakElement: reportData.weakElement,
             balanceScore: reportData.balanceScore,
@@ -426,12 +347,7 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <TestContext.Provider value={{
       selectedCards,
       setSelectedCards,
-      reportType,
-      setReportType,
-      wishContext,
-      setWishContext,
       currentStep,
-      setCurrentStep,
       isCompleted,
       isDrawing,
       report,

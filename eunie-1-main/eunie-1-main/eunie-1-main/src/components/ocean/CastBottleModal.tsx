@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Send, AlertCircle, ChevronRight, ChevronLeft, Check } from 'lucide-react';
+import { X, Send, AlertCircle, ChevronRight, ChevronLeft, Check, Clock } from 'lucide-react';
 import { useLanguage } from '../../i18n/LanguageContext';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
@@ -17,11 +17,21 @@ interface CastBottleModalProps {
 
 type Step = 'check' | 'select_report' | 'select_card' | 'write';
 
+interface BottleTag {
+  id: number;
+  tag: string;
+  zh: string;
+  ja: string;
+  sort_order: number;
+}
+
 export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClose, onNavigate, onSuccess, initialReport }) => {
   const { t, language } = useLanguage();
   const { user, isPremium } = useAuth();
   const [step, setStep] = useState<Step>('check');
   const [reports, setReports] = useState<AnalysisReport[]>([]);
+  const [tags, setTags] = useState<BottleTag[]>([]);
+  const [selectedTagId, setSelectedTagId] = useState<number | null>(null);
   const [selectedReport, setSelectedReport] = useState<AnalysisReport | null>(null);
   const [selectedCard, setSelectedCard] = useState<{ id: string; type: 'img' | 'word'; url?: string; text?: string; name: string } | null>(null);
   const [content, setContent] = useState('');
@@ -64,6 +74,7 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
       } else {
         fetchReports();
       }
+      fetchTags();
 
       if (user.default_bottle_nickname) {
         setNickname(user.default_bottle_nickname);
@@ -92,6 +103,21 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
       console.error("Error fetching reports:", err);
     } finally {
       setIsLoadingReports(false);
+    }
+  };
+
+  const fetchTags = async () => {
+    try {
+      const response = await fetch('/api/bottles/tags');
+      if (response.ok) {
+        const data = await response.json();
+        setTags(data);
+        if (data.length > 0) {
+          setSelectedTagId(data[0].id);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching tags:", err);
     }
   };
 
@@ -124,7 +150,8 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
           quote: quote.trim(),
           reportId: selectedReport.id,
           nickname: nickname.trim(),
-          energyColorTag: energyColor
+          energyColorTag: energyColor,
+          tagId: selectedTagId
         }),
       });
 
@@ -133,6 +160,12 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
       if (!response.ok) {
         if (data.code === 'SENSITIVE_CONTENT') {
           throw new Error(t('ocean_cast_error_sensitive'));
+        }
+        if (data.code === 'AI_MODERATION_FAILED') {
+          throw new Error(data.error || (language === 'zh' ? '內容似乎帶有較強的負面能量，請試著平復心情後再試。' : '内容に強い否定的なエネルギーが含まれているようです。心を落ち着かせてからもう一度お試しください。'));
+        }
+        if (data.code === 'REPORT_ALREADY_USED') {
+          throw new Error(data.error || (language === 'zh' ? '此份能量報告已經投擲過瓶中信了。' : 'このエネルギーレポートはすでに瓶中信に使用されています。'));
         }
         throw new Error(data.error || 'Failed to cast bottle');
       }
@@ -212,9 +245,9 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
       return (
         <div className="space-y-6">
           <div className="max-h-[400px] overflow-y-auto pr-2 space-y-3 no-scrollbar">
-            {reports.map((report) => (
+            {reports.map((report, idx) => (
               <button
-                key={report.id}
+                key={`report-${report.id}-${idx}`}
                 onClick={() => {
                   setSelectedReport(report);
                   const langKey = language === 'ja' ? 'ja-JP' : 'zh-TW';
@@ -344,6 +377,28 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
             </div>
           </div>
 
+          {/* Tag Selection */}
+          <div className="space-y-4">
+            <label className="text-[12px] tracking-widest text-ink/40 uppercase px-1">
+              {t('ocean_select_tag')}
+            </label>
+            <div className="flex flex-wrap gap-2 px-1">
+              {tags.map((tag, index) => (
+                <button
+                  key={tag.id || `tag-${index}`}
+                  onClick={() => setSelectedTagId(tag.id)}
+                  className={`px-4 py-2 rounded-full text-[11px] tracking-wider transition-all border ${
+                    selectedTagId === tag.id 
+                      ? 'bg-ink text-white border-ink shadow-md' 
+                      : 'bg-white text-ink/60 border-ink/10 hover:border-ink/30'
+                  }`}
+                >
+                  {language === 'ja' ? tag.ja : tag.zh}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <Button
             onClick={handleSubmit}
             disabled={isSubmitting || !content.trim() || !nickname.trim()}
@@ -405,11 +460,21 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
                     {getStepTitle()}
                   </h2>
                   {step === 'write' && (
-                    <p className="text-sm text-ink/40 leading-relaxed">
-                      {language === 'zh' 
-                        ? '將妳此刻的感悟或祝福化作文字，讓它在瓶中信之海中尋找有緣的靈魂。' 
-                        : '今のあなたの気づきや祝福を言葉にして、瓶中信の海で縁のある魂を探しましょう。'}
-                    </p>
+                    <div className="space-y-3">
+                      <p className="text-sm text-ink/40 leading-relaxed">
+                        {language === 'zh' 
+                          ? '將妳此刻的感悟或祝福化作文字，讓它在瓶中信之海中尋找有緣的靈魂。' 
+                          : '今のあなたの気づきや祝福を言葉にして、瓶中信の海で縁のある魂を探しましょう。'}
+                      </p>
+                      <div className="flex items-center gap-2 text-[10px] text-amber-600/60 bg-amber-50/50 px-3 py-2 rounded-lg border border-amber-100/50">
+                        <Clock size={12} />
+                        <span className="tracking-wider uppercase">
+                          {language === 'zh' 
+                            ? '此瓶中信將在海洋中漂流 30 天，隨後沉入深海記憶。' 
+                            : 'この瓶中信は30日間海を漂い、その後深海の記憶に沈みます。'}
+                        </span>
+                      </div>
+                    </div>
                   )}
                 </div>
                 <button

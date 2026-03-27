@@ -3,45 +3,24 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Bell, X, Zap, Sparkles, MessageSquare } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useTest } from '../store/TestContext';
-import { trackGrowthEvent } from '../utils/growthAnalytics';
 
 interface Notification {
   id: string;
   title: string;
   message: string;
-  type: 'energy' | 'ritual' | 'insight' | 'achievement' | 'reengage' | 'system';
+  type: 'energy' | 'ritual' | 'insight';
   icon: any;
 }
 
 export const NotificationManager: React.FC = () => {
   const { t } = useLanguage();
-  const { userPoints } = useTest();
+  const { userPoints, totalReportsCount } = useTest();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  // Browser Push API Helper
-  const sendBrowserPush = (title: string, body: string) => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, { body, icon: '/favicon.ico' });
-    }
-  };
-
   const addNotification = (type: Notification['type'], title: string, message: string, icon: any) => {
-    // In-app toast
-    const id = crypto.randomUUID();
+    const id = Math.random().toString(36).substring(7);
     setNotifications(prev => [...prev, { id, title, message, type, icon }]);
     
-    // Growth Tracking for impressions
-    trackGrowthEvent('message_impression', {
-      message_id: id,
-      message_type: type,
-      message_title: title
-    });
-
-    // Browser push for important categories
-    if (type === 'reengage' || type === 'energy') {
-      sendBrowserPush(title, message);
-    }
-
     // Auto-remove after 5 seconds
     setTimeout(() => {
       removeNotification(id);
@@ -52,27 +31,17 @@ export const NotificationManager: React.FC = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
-  // Simulated "Energy Low" notification
+  // Simulated "Energy Full" notification
   useEffect(() => {
-    if (userPoints > 0 && userPoints <= 3) {
+    if (userPoints >= 15) {
       const timer = setTimeout(() => {
         addNotification(
           'energy',
-          t('points_low_title'),
-          t('points_low_body'),
+          t('push_energy_full_title'),
+          t('push_energy_full_body'),
           Zap
         );
-      }, 5000);
-      return () => clearTimeout(timer);
-    } else if (userPoints === 0) {
-      const timer = setTimeout(() => {
-        addNotification(
-          'energy',
-          t('points_empty_title'),
-          t('points_empty_body'),
-          Zap
-        );
-      }, 3000);
+      }, 10000); // Show after 10s of being full as a "reminder"
       return () => clearTimeout(timer);
     }
   }, [userPoints]);
@@ -87,49 +56,6 @@ export const NotificationManager: React.FC = () => {
         Sparkles
       );
     }, 30000); // Show after 30s
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Request Push Permission on mount
-  useEffect(() => {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, []);
-
-  // Life-integrated Push Simulation (based on time of day)
-  useEffect(() => {
-    const hour = new Date().getHours();
-    let notification: { title: string; body: string } | null = null;
-
-    if (hour >= 5 && hour < 10) {
-      notification = { title: t('reengage_morning_title'), body: t('reengage_morning_body') };
-    } else if (hour >= 22 || hour < 2) {
-      notification = { title: t('reengage_night_title'), body: t('reengage_night_body') };
-    }
-
-    if (notification) {
-      const timer = setTimeout(() => {
-        addNotification('reengage', notification!.title, notification!.body, MessageSquare);
-      }, 15000);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  // Achievement Milestones (Simulated)
-  useEffect(() => {
-    // In a real app, these would be triggered by event bus or state changes
-    const timer = setTimeout(() => {
-      const streak = parseInt(localStorage.getItem('eunie_streak') || '0');
-      if (streak >= 3) {
-        addNotification(
-          'achievement',
-          t('milestone_streak_title'),
-          t('milestone_streak_body').replace('{count}', streak.toString()),
-          Sparkles
-        );
-      }
-    }, 45000);
     return () => clearTimeout(timer);
   }, []);
 

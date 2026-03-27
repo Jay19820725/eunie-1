@@ -1383,8 +1383,8 @@
         "card_id": "tw_img_70",
         "locale": "zh-TW",
         "card_type": "img",
-        "card_name": "把煩惱寫在沙灘",
-        "card_name_en": "Writing Troubles on Sand",
+        "card_name": "把心願寫在沙灘",
+        "card_name_en": "Writing Wishes on Sand",
         "image_path": "cards/tw/image/img_70.jpeg",
         "elements": {
             "wood": 10,

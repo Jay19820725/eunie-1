@@ -281,6 +281,14 @@ export const AdminDashboard: React.FC = () => {
 
   const handleSaveBottleTag = async () => {
     if (!editingBottleTag) return;
+    
+    // Validation: At least one name must be provided
+    if ((!editingBottleTag.zh || editingBottleTag.zh.trim() === '') && 
+        (!editingBottleTag.ja || editingBottleTag.ja.trim() === '')) {
+      alert('請至少輸入一個名稱（中文或日文）');
+      return;
+    }
+
     try {
       await saveBottleTagMutation.mutateAsync(editingBottleTag);
       setEditingBottleTag(null);
@@ -425,8 +433,8 @@ export const AdminDashboard: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-ink/5">
-            {users?.map(user => (
-              <tr key={user.uid} className="hover:bg-ink/[0.02] transition-colors">
+            {users?.map((user, index) => (
+              <tr key={user.uid || `user-${index}`} className="hover:bg-ink/[0.02] transition-colors">
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-ink/5 flex items-center justify-center overflow-hidden">
@@ -531,8 +539,8 @@ export const AdminDashboard: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-ink/5">
-                {reports.map((report: any) => (
-                  <tr key={report.id} className="hover:bg-ink/[0.02] transition-colors group">
+                {reports.map((report: any, index: number) => (
+                  <tr key={report.id || `report-${index}`} className="hover:bg-ink/[0.02] transition-colors group">
                     <td className="px-6 py-4">
                       <input 
                         type="checkbox" 
@@ -710,8 +718,8 @@ export const AdminDashboard: React.FC = () => {
           >
             <GlassCard className="p-0 overflow-hidden">
               <div className="p-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 max-h-[calc(100vh-350px)] overflow-y-auto custom-scrollbar">
-                {cards?.images.map(card => (
-                  <div key={card.id} className="aspect-[3/4] rounded-2xl overflow-hidden bg-ink/5 border border-ink/5 group relative shadow-sm hover:shadow-md transition-all">
+                {cards?.images.map((card, index) => (
+                  <div key={card.id || `card-img-${index}`} className="aspect-[3/4] rounded-2xl overflow-hidden bg-ink/5 border border-ink/5 group relative shadow-sm hover:shadow-md transition-all">
                     <img src={card.imageUrl} className="w-full h-full object-cover" />
                     
                     {/* Card Info Overlay */}
@@ -762,8 +770,8 @@ export const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-ink/5">
-                    {cards?.words.map(card => (
-                      <tr key={card.id} className="hover:bg-ink/[0.01] transition-colors group">
+                    {cards?.words.map((card, index) => (
+                      <tr key={card.id || `card-word-${index}`} className="hover:bg-ink/[0.01] transition-colors group">
                         <td className="px-8 py-4">
                           {card.imageUrl && (
                             <div className="w-12 h-12 rounded-xl overflow-hidden border border-ink/5 shadow-sm">
@@ -861,8 +869,8 @@ export const AdminDashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {prompts?.map(prompt => (
-          <GlassCard key={prompt.id} className="p-6 overflow-hidden group">
+        {prompts?.map((prompt, index) => (
+          <GlassCard key={prompt.id || `prompt-${index}`} className="p-6 overflow-hidden group">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center gap-3">
                 <div className={`p-2 rounded-lg ${prompt.status === 'active' ? 'bg-wood/10 text-wood' : 'bg-ink/5 text-ink-muted'}`}>
@@ -1159,20 +1167,20 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-serif">祝福標籤管理</h2>
             <Button 
-              onClick={() => setEditingBottleTag({ name_zh: '', name_ja: '', color: '#8E9299' })}
+              onClick={() => setEditingBottleTag({ zh: '', ja: '', color: '#8E9299', sort_order: 0 })}
               className="bg-wood text-white gap-2"
             >
               <Plus size={18} /> 新增標籤
             </Button>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {tags.map((tag: any) => (
-              <GlassCard key={tag.id} className="p-4 flex justify-between items-center">
+            {tags.map((tag: any, index: number) => (
+              <GlassCard key={tag.id || `tag-${index}`} className="p-4 flex justify-between items-center">
                 <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color }} />
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tag.color || '#8E9299' }} />
                   <div>
-                    <p className="text-sm font-medium">{tag.name_zh}</p>
-                    <p className="text-[10px] text-ink-muted">{tag.name_ja}</p>
+                    <p className="text-sm font-medium">{tag.zh || ''}</p>
+                    <p className="text-[10px] text-ink-muted">{tag.ja || ''}</p>
                   </div>
                 </div>
                 <div className="flex gap-1">
@@ -1206,9 +1214,9 @@ export const AdminDashboard: React.FC = () => {
             </Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            {words.map((word: any) => (
+            {words.map((word: any, index: number) => (
               <div 
-                key={word.id} 
+                key={word.id || `word-${index}`} 
                 className="px-3 py-1.5 bg-white/50 border border-ink/5 rounded-full flex items-center gap-2 group"
               >
                 <span className="text-sm">{word.word}</span>
@@ -1242,8 +1250,8 @@ export const AdminDashboard: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-ink/5">
-                  {bottles.map((bottle: any) => (
-                    <tr key={bottle.id} className="hover:bg-ink/[0.02] transition-colors">
+                  {bottles.map((bottle: any, index: number) => (
+                    <tr key={bottle.id || `bottle-${index}`} className="hover:bg-ink/[0.02] transition-colors">
                       <td className="px-6 py-4">
                         <p className="text-sm line-clamp-1 max-w-xs">{bottle.content}</p>
                       </td>
@@ -1297,8 +1305,8 @@ export const AdminDashboard: React.FC = () => {
                       <label className="block text-[10px] uppercase tracking-widest text-ink-muted mb-2">中文名稱</label>
                       <input 
                         type="text" 
-                        value={editingBottleTag.name_zh}
-                        onChange={(e) => setEditingBottleTag({ ...editingBottleTag, name_zh: e.target.value })}
+                        value={editingBottleTag.zh || ''}
+                        onChange={(e) => setEditingBottleTag({ ...editingBottleTag, zh: e.target.value })}
                         className="w-full bg-ink/5 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-wood/20"
                       />
                     </div>
@@ -1306,8 +1314,17 @@ export const AdminDashboard: React.FC = () => {
                       <label className="block text-[10px] uppercase tracking-widest text-ink-muted mb-2">日文名稱</label>
                       <input 
                         type="text" 
-                        value={editingBottleTag.name_ja}
-                        onChange={(e) => setEditingBottleTag({ ...editingBottleTag, name_ja: e.target.value })}
+                        value={editingBottleTag.ja || ''}
+                        onChange={(e) => setEditingBottleTag({ ...editingBottleTag, ja: e.target.value })}
+                        className="w-full bg-ink/5 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-wood/20"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest text-ink-muted mb-2">排序 (Sort Order)</label>
+                      <input 
+                        type="number" 
+                        value={editingBottleTag.sort_order || 0}
+                        onChange={(e) => setEditingBottleTag({ ...editingBottleTag, sort_order: parseInt(e.target.value) || 0 })}
                         className="w-full bg-ink/5 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-wood/20"
                       />
                     </div>
@@ -1316,17 +1333,26 @@ export const AdminDashboard: React.FC = () => {
                       <div className="flex gap-3">
                         <input 
                           type="color" 
-                          value={editingBottleTag.color}
+                          value={editingBottleTag.color || '#8E9299'}
                           onChange={(e) => setEditingBottleTag({ ...editingBottleTag, color: e.target.value })}
                           className="w-12 h-12 rounded-lg cursor-pointer"
                         />
                         <input 
                           type="text" 
-                          value={editingBottleTag.color}
+                          value={editingBottleTag.color || ''}
                           onChange={(e) => setEditingBottleTag({ ...editingBottleTag, color: e.target.value })}
                           className="flex-1 bg-ink/5 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-wood/20"
                         />
                       </div>
+                    </div>
+                    <div className="flex items-center gap-2 pt-2">
+                      <input 
+                        type="checkbox" 
+                        checked={editingBottleTag.is_active !== false}
+                        onChange={(e) => setEditingBottleTag({ ...editingBottleTag, is_active: e.target.checked })}
+                        className="rounded border-ink/10 text-wood focus:ring-wood"
+                      />
+                      <label className="text-[10px] uppercase tracking-widest text-ink-muted">啟用中 (Active)</label>
                     </div>
                   </div>
                   <div className="flex gap-3 mt-8">
@@ -1459,7 +1485,7 @@ export const AdminDashboard: React.FC = () => {
                 <label className="text-[10px] uppercase tracking-widest text-ink-muted">網站標題 (Title)</label>
                 <input 
                   type="text" 
-                  value={seo.title}
+                  value={seo.title || ''}
                   onChange={(e) => queryClient.setQueryData(['admin', 'settings', 'seo'], { ...seo, title: e.target.value })}
                   className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                 />
@@ -1468,7 +1494,7 @@ export const AdminDashboard: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest text-ink-muted">網站描述 (Description)</label>
                 <textarea 
-                  value={seo.description}
+                  value={seo.description || ''}
                   onChange={(e) => queryClient.setQueryData(['admin', 'settings', 'seo'], { ...seo, description: e.target.value })}
                   className="w-full h-32 px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30 resize-none"
                 />
@@ -1478,7 +1504,7 @@ export const AdminDashboard: React.FC = () => {
                 <label className="text-[10px] uppercase tracking-widest text-ink-muted">關鍵字 (Keywords)</label>
                 <input 
                   type="text" 
-                  value={seo.keywords}
+                  value={seo.keywords || ''}
                   onChange={(e) => queryClient.setQueryData(['admin', 'settings', 'seo'], { ...seo, keywords: e.target.value })}
                   className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                 />
@@ -1512,7 +1538,7 @@ export const AdminDashboard: React.FC = () => {
                   <label className="text-[10px] uppercase tracking-widest text-ink-muted">預設分享圖 URL</label>
                   <input 
                     type="text" 
-                    value={seo.og_image}
+                    value={seo.og_image || ''}
                     onChange={(e) => queryClient.setQueryData(['admin', 'settings', 'seo'], { ...seo, og_image: e.target.value })}
                     className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                   />
@@ -1578,7 +1604,7 @@ export const AdminDashboard: React.FC = () => {
                         <input 
                           type="text" 
                           placeholder="字型網址 (Google Fonts URL)"
-                          value={fonts[lang].display.url}
+                          value={fonts[lang].display.url || ''}
                           onChange={(e) => {
                             const newFonts = { ...fonts };
                             newFonts[lang].display.url = e.target.value;
@@ -1589,7 +1615,7 @@ export const AdminDashboard: React.FC = () => {
                         <input 
                           type="text" 
                           placeholder="CSS Family Name (e.g. 'Noto Serif TC', serif)"
-                          value={fonts[lang].display.family}
+                          value={fonts[lang].display.family || ''}
                           onChange={(e) => {
                             const newFonts = { ...fonts };
                             newFonts[lang].display.family = e.target.value;
@@ -1606,7 +1632,7 @@ export const AdminDashboard: React.FC = () => {
                         <input 
                           type="text" 
                           placeholder="字型網址 (Google Fonts URL)"
-                          value={fonts[lang].body.url}
+                          value={fonts[lang].body.url || ''}
                           onChange={(e) => {
                             const newFonts = { ...fonts };
                             newFonts[lang].body.url = e.target.value;
@@ -1617,7 +1643,7 @@ export const AdminDashboard: React.FC = () => {
                         <input 
                           type="text" 
                           placeholder="CSS Family Name (e.g. 'Noto Sans TC', sans-serif)"
-                          value={fonts[lang].body.family}
+                          value={fonts[lang].body.family || ''}
                           onChange={(e) => {
                             const newFonts = { ...fonts };
                             newFonts[lang].body.family = e.target.value;
@@ -1646,7 +1672,7 @@ export const AdminDashboard: React.FC = () => {
                 <input 
                   type="text" 
                   placeholder="G-XXXXXXXXXX"
-                  value={seoSettings.google_analytics_id}
+                  value={seoSettings.google_analytics_id || ''}
                   onChange={(e) => queryClient.setQueryData(['admin', 'settings', 'seo'], { ...seoSettings, google_analytics_id: e.target.value })}
                   className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                 />
@@ -1657,7 +1683,7 @@ export const AdminDashboard: React.FC = () => {
                 <input 
                   type="text" 
                   placeholder="驗證碼內容"
-                  value={seoSettings.search_console_id}
+                  value={seoSettings.search_console_id || ''}
                   onChange={(e) => queryClient.setQueryData(['admin', 'settings', 'seo'], { ...seoSettings, search_console_id: e.target.value })}
                   className="w-full px-4 py-3 bg-ink/[0.02] border border-ink/5 rounded-xl text-sm focus:outline-none focus:border-wood/30"
                 />
@@ -1699,15 +1725,15 @@ export const AdminDashboard: React.FC = () => {
             </tr>
           </thead>
           <tbody className="divide-y divide-ink/5">
-            {sessions?.map(session => (
-              <tr key={session.id} className="hover:bg-ink/[0.02] transition-colors">
+            {sessions?.map((session, index) => (
+              <tr key={session.id || `session-${index}`} className="hover:bg-ink/[0.02] transition-colors">
                 <td className="px-6 py-4 font-mono text-[10px]">{session.id}</td>
                 <td className="px-6 py-4 font-mono text-[10px]">{session.user_id}</td>
                 <td className="px-6 py-4 text-ink-muted">{formatDate(session.session_time)}</td>
                 <td className="px-6 py-4">
                   <div className="flex -space-x-2">
                     {session.image_cards?.map((c: any, i: number) => (
-                      <div key={i} className="w-6 h-6 rounded-full border border-white overflow-hidden bg-ink/5">
+                      <div key={c.id || `img-${i}`} className="w-6 h-6 rounded-full border border-white overflow-hidden bg-ink/5">
                         <img src={c.imageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       </div>
                     ))}
@@ -2116,7 +2142,7 @@ export const AdminDashboard: React.FC = () => {
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">語系 (Locale)</label>
                         <select 
-                          value={editingCard.data.locale}
+                          value={editingCard.data.locale || 'zh-TW'}
                           onChange={(e) => setEditingCard({ ...editingCard, data: { ...editingCard.data, locale: e.target.value } })}
                           className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30 focus:bg-white transition-all shadow-sm"
                         >
@@ -2128,7 +2154,7 @@ export const AdminDashboard: React.FC = () => {
                         <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">英文名稱 (Internal)</label>
                         <input 
                           type="text" 
-                          value={editingCard.data.name_en}
+                          value={editingCard.data.name_en || ''}
                           onChange={(e) => setEditingCard({ ...editingCard, data: { ...editingCard.data, name_en: e.target.value } })}
                           className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30 focus:bg-white transition-all shadow-sm"
                           placeholder="card_name_en"
@@ -2142,7 +2168,7 @@ export const AdminDashboard: React.FC = () => {
                           <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">關鍵字文本</label>
                           <input 
                             type="text" 
-                            value={editingCard.data.text}
+                            value={editingCard.data.text || ''}
                             onChange={(e) => setEditingCard({ ...editingCard, data: { ...editingCard.data, text: e.target.value } })}
                             className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30 focus:bg-white transition-all shadow-sm"
                             placeholder="輸入關鍵字..."
@@ -2153,7 +2179,7 @@ export const AdminDashboard: React.FC = () => {
                           <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">卡片名稱</label>
                           <input 
                             type="text" 
-                            value={editingCard.data.name}
+                            value={editingCard.data.name || ''}
                             onChange={(e) => setEditingCard({ ...editingCard, data: { ...editingCard.data, name: e.target.value } })}
                             className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30 focus:bg-white transition-all shadow-sm"
                             placeholder="輸入卡片名稱..."
@@ -2164,7 +2190,7 @@ export const AdminDashboard: React.FC = () => {
                         <label className="text-[10px] uppercase tracking-widest text-ink-muted font-medium">圖片 URL</label>
                         <input 
                           type="text" 
-                          value={editingCard.data.imageUrl}
+                          value={editingCard.data.imageUrl || ''}
                           onChange={(e) => setEditingCard({ ...editingCard, data: { ...editingCard.data, imageUrl: e.target.value } })}
                           className="w-full px-5 py-4 bg-ink/[0.02] border border-ink/5 rounded-2xl text-sm focus:outline-none focus:border-wood/30 focus:bg-white transition-all shadow-sm"
                           placeholder="https://..."

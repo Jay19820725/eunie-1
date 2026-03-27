@@ -247,7 +247,7 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
           <div className="max-h-[400px] overflow-y-auto pr-2 space-y-3 no-scrollbar">
             {reports.map((report, idx) => (
               <button
-                key={`report-${report.id}-${idx}`}
+                key={`cast-report-${report.id}-${idx}`}
                 onClick={() => {
                   setSelectedReport(report);
                   const langKey = language === 'ja' ? 'ja-JP' : 'zh-TW';
@@ -385,7 +385,7 @@ export const CastBottleModal: React.FC<CastBottleModalProps> = ({ isOpen, onClos
             <div className="flex flex-wrap gap-2 px-1">
               {tags.map((tag, index) => (
                 <button
-                  key={tag.id || `tag-${index}`}
+                  key={`cast-tag-select-${tag.id}-${index}`}
                   onClick={() => setSelectedTagId(tag.id)}
                   className={`px-4 py-2 rounded-full text-[11px] tracking-wider transition-all border ${
                     selectedTagId === tag.id 
