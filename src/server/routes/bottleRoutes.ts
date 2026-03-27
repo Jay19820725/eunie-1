@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db.ts";
 import { GoogleGenAI } from "@google/genai";
+import { escapeRegex } from "../../utils/regexUtils.ts";
 
 const router = Router();
 
@@ -55,10 +56,12 @@ router.post("/", async (req, res) => {
 
     // 4. Sensitive Word Filter (Direct Rejection)
     const sensitiveWordsResult = await pool.query("SELECT word FROM sensitive_words");
-    const sensitiveWords = sensitiveWordsResult.rows.map(r => r.word);
-    
-    for (const word of sensitiveWords) {
-      if (content.includes(word)) {
+    if (sensitiveWordsResult.rows.length > 0) {
+      const sensitiveWordsRegex = new RegExp(
+        sensitiveWordsResult.rows.map(r => escapeRegex(r.word)).join('|')
+      );
+
+      if (sensitiveWordsRegex.test(content)) {
         return res.status(400).json({ 
           error: "Content contains sensitive words.", 
           code: "SENSITIVE_CONTENT" 
