@@ -71,16 +71,28 @@ export interface CardPair {
 
 export interface SelectedCards {
   sessionId?: string;
+  reportType?: ReportType;
+  wishContext?: WishContext;
   images: ImageCard[];
   words: WordCard[];
   pairs?: CardPair[];
   drawnAt: number;
 }
 
+export type ReportType = 'daily' | 'wish';
+
+export interface WishContext {
+  domains: string[]; // e.g., ['career', 'love', 'health']
+  targets: Record<string, string>; // domain -> target/person
+  contents: Record<string, string>; // domain -> specific wish content
+}
+
 export interface AnalysisReport {
   id: string;
   userId?: string;
   timestamp: number;
+  reportType?: ReportType;
+  wishContext?: WishContext;
   selectedImageIds: string[];
   selectedWordIds: string[];
   totalScores: FiveElementValues; // Normalized percentages
@@ -99,6 +111,10 @@ export interface AnalysisReport {
   reflection?: string;
   actionSuggestion?: string;
   shareThumbnail?: string;
+
+  // Wish Specific AI Content
+  manifestationGuidance?: string; // 顯化指引
+  energyObstacles?: string; // 能量阻礙分析
 
   // Multilingual Content
   multilingualContent?: {
@@ -220,7 +236,7 @@ export interface ChatMessage {
   energyUpdate?: FiveElementValues;
 }
 
-export type DrawStage = 'idle' | 'shuffling' | 'drawing_images' | 'drawing_words' | 'pairing' | 'associating' | 'revealed';
+export type DrawStage = 'idle' | 'wish_input' | 'shuffling' | 'drawing_images' | 'drawing_words' | 'pairing' | 'associating' | 'revealed';
 
 export type EnergyReportData = AnalysisReport;
 

@@ -10,10 +10,11 @@ export const useEnergyTestState = (onComplete: () => void) => {
     setAssociations, 
     generateReport, 
     isDrawing, 
-    setSelectedCards 
+    setSelectedCards,
+    reportType
   } = useTest();
 
-  const [drawStage, setDrawStage] = useState<DrawStage>('idle');
+  const [drawStage, setDrawStage] = useState<DrawStage>(reportType === 'wish' ? 'wish_input' : 'idle');
   const [flippedImages, setFlippedImages] = useState<number[]>([]);
   const [flippedWords, setFlippedWords] = useState<number[]>([]);
   const [hasRedrawnImages, setHasRedrawnImages] = useState(false);

@@ -11,6 +11,7 @@ import { useLanguage } from '../i18n/LanguageContext';
 import { preloadDecks } from '../services/cardEngine';
 import { PairingStage } from '../components/test/PairingStage';
 import { AssociationStage } from '../components/test/AssociationStage';
+import { WishInputStage } from '../components/test/WishInputStage';
 import { DynamicSubtitle } from '../components/test/DynamicSubtitle';
 import { useEnergyTestState } from '../hooks/useEnergyTestState';
 
@@ -60,6 +61,7 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
     handlePairingComplete,
     handleAssociationComplete,
     handleComplete,
+    handleWishSubmit,
     handleRedrawAll,
     hasRedrawnWords,
     isReshuffling,
@@ -229,7 +231,9 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
       {/* Ritual Stage */}
       <div className="relative w-full min-h-[380px] md:min-h-[900px] pb-10 md:pb-[250px] flex items-center justify-center perspective-1000 mt-0 md:mt-0">
         <AnimatePresence mode="wait">
-          {drawStage === 'shuffling' ? (
+          {drawStage === 'wish_input' ? (
+            <WishInputStage onSubmit={handleWishSubmit} />
+          ) : drawStage === 'shuffling' ? (
             <motion.div
               key="shuffling"
               initial={{ opacity: 0 }}

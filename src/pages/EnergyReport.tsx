@@ -29,10 +29,12 @@ const WeavingLoader: React.FC<{ label?: string }> = ({ label }) => {
   );
 };
 
+import { LoopStage } from '../core/types';
+
 export const EnergyReport: React.FC<{ 
   onReset: () => void;
   onNavigate: (page: string) => void;
-  loopStage: string;
+  loopStage: LoopStage;
 }> = ({ onReset, onNavigate, loopStage }) => {
   const { selectedCards } = useTest();
   const { t } = useLanguage();

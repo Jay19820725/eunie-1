@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { Button } from '../components/ui/Button';
-import { Sparkles, ArrowRight, Activity, Calendar, Zap } from 'lucide-react';
+import { Wind, ArrowRight, Activity, Zap } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
-import { LoopStage } from '../App';
+import { LoopStage } from '../core/types';
 import { AuthPromptModal } from '../components/AuthPromptModal';
 
 interface HomeProps {
-  onStartTest: () => void;
+  onStartTest: (type?: 'daily' | 'wish') => void;
   loopStage: LoopStage;
   onNavigate: (page: string) => void;
   streak?: number;
@@ -52,20 +52,79 @@ const EnergyField = () => (
   </div>
 );
 
-const StatusCard = ({ title, value, icon: Icon, delay = 0 }: { title: string; value: string; icon: any; delay?: number }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 1.5, delay, ease: [0.22, 1, 0.36, 1] }}
-    className="bg-white/30 backdrop-blur-2xl border border-white/50 p-6 md:p-8 rounded-[2.5rem] flex flex-col gap-4 shadow-sm hover:shadow-md transition-all duration-700"
-  >
-    <div className="flex items-center justify-between">
-      <span className="text-[9px] tracking-[0.3em] uppercase text-ink/40 font-medium">{title}</span>
-      <div className="p-2 bg-ink/5 rounded-full text-ink/30">
-        <Icon size={14} />
+const StatusCard = ({ title, value, icon: Icon, delay = 0, onClick }: { title: string; value: string; icon: any; delay?: number; onClick?: () => void }) => {
+  const isLongText = value.length > 45;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        opacity: { duration: 1.5, delay },
+        y: { duration: 1.5, delay }
+      }}
+      onClick={onClick}
+      className={`bg-white/30 backdrop-blur-2xl border border-white/50 p-6 md:p-8 rounded-[2.5rem] flex flex-col gap-4 shadow-sm hover:shadow-md transition-all duration-700 ${onClick ? 'cursor-pointer group' : ''}`}
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] tracking-[0.3em] uppercase text-ink/40 font-medium">{title}</span>
+        <div className="p-2 bg-ink/5 rounded-full text-ink/30 group-hover:bg-ink/10 transition-colors">
+          <Icon size={14} />
+        </div>
       </div>
-    </div>
-    <div className="text-xl md:text-2xl font-serif text-ink/80 tracking-wide font-light">{value}</div>
+      <div className={`text-xl md:text-2xl font-serif text-ink/80 tracking-wide font-light transition-all duration-500 ${onClick && isLongText ? 'line-clamp-3' : ''}`}>
+        {value}
+      </div>
+      {onClick && isLongText && (
+        <div className="text-[8px] tracking-[0.2em] text-ink/20 uppercase font-medium mt-[-4px] group-hover:text-ink/40 transition-colors">
+          {/* Subtle hint */}
+          ••••
+        </div>
+      )}
+    </motion.div>
+  );
+};
+
+const SoulQuoteModal = ({ isOpen, onClose, quote }: { isOpen: boolean; onClose: () => void; quote: string }) => (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: isOpen ? 1 : 0 }}
+    className={`fixed inset-0 z-[100] flex items-center justify-center p-6 bg-white/10 backdrop-blur-sm transition-all duration-500 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none opacity-0'}`}
+    onClick={onClose}
+  >
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+      animate={{ opacity: isOpen ? 1 : 0, scale: isOpen ? 1 : 0.9, y: isOpen ? 0 : 20 }}
+      transition={{ type: "spring", damping: 25, stiffness: 300 }}
+      className="bg-white/80 backdrop-blur-3xl border border-white/50 p-10 md:p-16 rounded-[3rem] max-w-2xl w-full shadow-2xl relative overflow-hidden"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Decorative Elements */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-ink/5 to-transparent" />
+      <div className="absolute -top-12 -right-12 w-32 h-32 bg-ink/[0.02] rounded-full blur-3xl" />
+      
+      <div className="flex flex-col items-center text-center gap-10">
+        <div className="p-4 bg-ink/5 rounded-full text-ink/20">
+          <Activity size={24} strokeWidth={1} />
+        </div>
+        
+        <div className="space-y-4">
+          <span className="text-[10px] tracking-[0.5em] uppercase text-ink/30 font-medium">Soul Whisper</span>
+          <div className="h-px w-8 bg-ink/10 mx-auto" />
+        </div>
+
+        <p className="text-2xl md:text-3xl font-serif text-ink/80 leading-relaxed font-light italic">
+          "{quote}"
+        </p>
+
+        <button 
+          onClick={onClose}
+          className="mt-4 text-[10px] tracking-[0.4em] uppercase text-ink/40 hover:text-ink transition-colors font-medium py-2 px-6 border border-ink/5 rounded-full hover:bg-ink/5"
+        >
+          Close
+        </button>
+      </div>
+    </motion.div>
   </motion.div>
 );
 
@@ -73,36 +132,74 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
   const { profile, login } = useAuth();
   const { t, language } = useLanguage();
   const [lastEnergy, setLastEnergy] = useState<string | null>(null);
-  const [recentReports, setRecentReports] = useState<any[]>([]);
+  const [weeklyWishes, setWeeklyWishes] = useState<number>(0);
+  const [latestReport, setLatestReport] = useState<any>(null);
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
 
-  const handleStartTest = () => {
+  const handleStartTest = (type: 'daily' | 'wish' = 'daily') => {
     if (!profile?.uid) {
-      setIsAuthPromptOpen(true);
-      return;
+      setIsAuthPromptOpen(type === 'wish' ? false : true); // Adjust if needed, but usually we want login
+      if (!profile?.uid) {
+        setIsAuthPromptOpen(true);
+        return;
+      }
     }
-    onStartTest();
+    onStartTest(type);
   };
 
   const handleAuthSuccess = () => {
     // After successful login, automatically start the test
-    onStartTest();
+    onStartTest('daily');
   };
 
   useEffect(() => {
     if (profile?.uid) {
-      fetch(`/api/reports/${profile.uid}`)
+      // Fetch reports history
+      fetch(`/api/reports/history/${profile.uid}?limit=10`)
         .then(res => res.json())
         .then(data => {
-          if (data.reports && data.reports.length > 0) {
-            const latest = data.reports[0];
-            setLastEnergy(latest.dominantElement || null);
-            setRecentReports(data.reports.slice(0, 7).reverse());
+          if (data && data.length > 0) {
+            const latest = data[0];
+            setLatestReport(latest);
+            setLastEnergy(latest.dominant_element || null);
           }
         })
-        .catch(() => setLastEnergy(null));
+        .catch(err => console.error("Error fetching history:", err));
+
+      // Fetch weekly wishes count
+      fetch(`/api/reports/weekly-wishes/${profile.uid}`)
+        .then(res => res.json())
+        .then(data => {
+          setWeeklyWishes(data.count || 0);
+        })
+        .catch(err => console.error("Error fetching weekly wishes:", err));
     }
   }, [profile?.uid]);
+
+  const getOracleAdvice = () => {
+    if (!latestReport) return t('home_yesterday_none');
+    
+    const { dominant_element, weak_element } = latestReport;
+    
+    // Logic for advice based on elements
+    if (dominant_element === 'wood') return t('home_oracle_wood_excess');
+    if (dominant_element === 'fire' && weak_element === 'fire') return t('home_oracle_fire_deficiency');
+    if (dominant_element === 'earth') return t('home_oracle_earth_excess');
+    if (dominant_element === 'metal') return t('home_oracle_metal_deficiency');
+    if (dominant_element === 'water') return t('home_oracle_water_excess');
+    
+    return t('home_oracle_balanced');
+  };
+
+  const getSoulQuote = (truncate = false) => {
+    if (!latestReport || !latestReport.psychological_insight) return t('home_yesterday_none');
+    const quote = latestReport.psychological_insight;
+    if (truncate && quote.length > 20) {
+      return quote.substring(0, 20) + '...';
+    }
+    return quote;
+  };
 
   const getStatusText = () => {
     if (loopStage === 'calibration') return t('home_status_pending');
@@ -174,93 +271,92 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
           transition={{ duration: 1.8, delay: 1.5 }}
           className="flex flex-col items-center gap-16 md:gap-24"
         >
-          {/* Dashboard Grid - Moved Above Button */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl -mt-10 md:-mt-[80px] p-0 mb-0">
+          {/* Energy Dashboard (New) */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-4xl -mt-10 md:-mt-[80px]">
             <StatusCard 
-              title={t('home_status_title')} 
-              value={getStatusText()} 
-              icon={Activity} 
+              title={t('home_dashboard_weekly_wishes')} 
+              value={`${weeklyWishes} ${t('home_streak_unit' as any)}`} 
+              icon={Wind} 
               delay={1.5}
             />
             <StatusCard 
-              title={t('home_streak_title' as any)} 
-              value={streak > 0 ? `${streak} ${t('home_streak_unit' as any)}` : t('home_yesterday_none')} 
+              title={t('home_dashboard_oracle_advice')} 
+              value={getOracleAdvice()} 
               icon={Zap} 
               delay={1.7}
             />
+            <StatusCard 
+              title={t('home_dashboard_soul_quote')} 
+              value={getSoulQuote(true)} 
+              icon={Activity} 
+              delay={1.9}
+              onClick={() => setIsQuoteModalOpen(true)}
+            />
           </div>
 
-          {/* Growth Trajectory (New) */}
-          {recentReports.length > 0 && (
+          <div className="flex flex-col md:flex-row gap-8 md:gap-12 items-center justify-center w-full max-w-4xl md:mt-[-40px]">
+            {/* Trouble Solving Button - Elegant Glass Style */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 2, delay: 2 }}
-              className="w-full max-w-2xl px-4 space-y-6 md:mt-[-50px] md:mb-0"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="relative group w-full md:w-1/2"
             >
-              <div className="flex items-center justify-between px-2">
-                <span className="text-[9px] tracking-[0.3em] uppercase text-ink/30 font-medium">
-                  {t('home_growth_title' as any)}
-                </span>
-                <span className="text-[9px] tracking-[0.3em] uppercase text-ink/20 font-light">
-                  {t('home_growth_subtitle' as any)}
-                </span>
-              </div>
-              <div className="flex items-end justify-between h-16 px-4 border-b border-ink/[0.03]">
-                {recentReports.map((report, idx) => (
-                  <div key={report.id} className="flex flex-col items-center gap-3 group relative">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${(report.balanceScore || 50)}%` }}
-                      transition={{ duration: 1.5, delay: 2.2 + (idx * 0.1) }}
-                      className={`w-1.5 rounded-t-full transition-all duration-500 ${
-                        report.dominantElement === 'wood' ? 'bg-wood' :
-                        report.dominantElement === 'fire' ? 'bg-fire' :
-                        report.dominantElement === 'earth' ? 'bg-earth' :
-                        report.dominantElement === 'metal' ? 'bg-metal' :
-                        'bg-water'
-                      } opacity-40 group-hover:opacity-100`}
-                    />
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-md px-2 py-1 rounded-md border border-ink/5 text-[8px] text-ink/60 whitespace-nowrap z-20">
-                      {report.balanceScore}% {t('home_balance_label' as any)}
-                    </div>
-                  </div>
-                ))}
-                {/* Fill empty days if less than 7 */}
-                {Array.from({ length: Math.max(0, 7 - recentReports.length) }).map((_, i) => (
-                  <div key={`empty-${i}`} className="w-1.5 h-1 bg-ink/[0.03] rounded-t-full" />
-                ))}
-              </div>
+              <div className="absolute -inset-1 bg-purple-200/10 rounded-[2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <button 
+                onClick={() => handleStartTest('wish')}
+                className="relative w-full bg-white/40 backdrop-blur-xl border border-white/60 p-8 md:p-10 rounded-[2rem] flex flex-col items-start gap-4 shadow-sm hover:shadow-md transition-all duration-700 overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Wind size={48} className="text-purple-400" />
+                </div>
+                <div className="flex items-center gap-3 text-ink/30">
+                  <Wind size={16} className="text-purple-400/50" />
+                  <span className="text-[9px] tracking-[0.3em] uppercase font-medium">{t('home_wish_desc')}</span>
+                </div>
+                <div className="text-xl md:text-2xl font-serif font-light tracking-wide text-ink/70 text-left">
+                  {t('home_wish_title')}
+                </div>
+                <div className="text-[10px] text-ink/30 font-light tracking-wider text-left max-w-[80%] leading-relaxed">
+                  {t('home_wish_subtitle')}
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-[10px] tracking-[0.2em] text-ink/20 group-hover:text-ink/40 transition-colors">
+                  <span>{t('home_wish_action')}</span>
+                  <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
             </motion.div>
-          )}
 
-          {loopStage === 'calibration' ? (
-            <Button 
-              onClick={handleStartTest}
-              className="group relative overflow-hidden h-16 md:h-20 px-16 md:px-24 rounded-full text-sm md:text-base tracking-[0.5em] bg-ink text-white hover:bg-ink/90 shadow-2xl shadow-ink/10 transition-all duration-700 md:mt-[-40px]"
+            {/* Daily Energy Button - Elegant Glass Style */}
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="relative group w-full md:w-1/2"
             >
-              <span className="relative z-10 flex items-center gap-4">
-                {t('home_start_btn')}
-                <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform duration-700" />
-              </span>
-            </Button>
-          ) : (
-            <div className="flex flex-wrap justify-center gap-8 md:-mt-[30px]">
-              <Button 
-                onClick={() => onNavigate(loopStage === 'resonance' ? 'ocean' : 'history')}
-                className="h-14 px-10 rounded-full text-[10px] tracking-[0.4em] bg-ink text-white hover:bg-ink/90 shadow-xl shadow-ink/10"
+              <div className="absolute -inset-1 bg-blue-200/10 rounded-[2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <button 
+                onClick={() => handleStartTest('daily')}
+                className="relative w-full bg-white/40 backdrop-blur-xl border border-white/60 p-8 md:p-10 rounded-[2rem] flex flex-col items-start gap-4 shadow-sm hover:shadow-md transition-all duration-700"
               >
-                {t('home_continue_loop')}
-              </Button>
-              <Button 
-                onClick={handleStartTest}
-                variant="outline"
-                className="h-14 px-10 rounded-full text-[10px] tracking-[0.4em] border-ink/10 text-ink/30 hover:text-ink hover:border-ink/20"
-              >
-                {t('report_new_test')}
-              </Button>
-            </div>
-          )}
+                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
+                  <Activity size={48} className="text-blue-400" />
+                </div>
+                <div className="flex items-center gap-3 text-ink/30">
+                  <Activity size={16} className="text-blue-400/50" />
+                  <span className="text-[9px] tracking-[0.3em] uppercase font-medium">{t('home_energy_desc')}</span>
+                </div>
+                <div className="text-xl md:text-2xl font-serif font-light tracking-wide text-ink/70 text-left">
+                  {t('home_energy_title')}
+                </div>
+                <div className="text-[10px] text-ink/30 font-light tracking-wider text-left max-w-[80%] leading-relaxed">
+                  {t('home_energy_subtitle')}
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-[10px] tracking-[0.2em] text-ink/20 group-hover:text-ink/40 transition-colors">
+                  <span>{t('home_energy_action')}</span>
+                  <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
+                </div>
+              </button>
+            </motion.div>
+          </div>
 
           {/* Five Elements Visualizer */}
           <div className="flex gap-10 md:gap-16 pt-8">
@@ -291,6 +387,12 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
         isOpen={isAuthPromptOpen} 
         onClose={() => setIsAuthPromptOpen(false)}
         onSuccess={handleAuthSuccess}
+      />
+
+      <SoulQuoteModal 
+        isOpen={isQuoteModalOpen}
+        onClose={() => setIsQuoteModalOpen(false)}
+        quote={getSoulQuote()}
       />
 
       {/* Background Breathing Hint */}

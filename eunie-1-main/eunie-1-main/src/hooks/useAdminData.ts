@@ -220,7 +220,7 @@ export const useAdminPrompts = (category?: string) => {
 export const useAdminAnalytics = (days: number = 30) => {
   return useQuery({
     queryKey: ['admin', 'analytics', days],
-    queryFn: () => adminService.getAnalyticsData(days),
+    queryFn: () => adminService.getAnalyticsData(),
   });
 };
 

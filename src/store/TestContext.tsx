@@ -20,6 +20,11 @@ interface TestContextType {
   setAssociations: (associations: { pair_id: string; text: string }[]) => void;
   generateReport: () => Promise<AnalysisReport | null>;
   setReport: (report: AnalysisReport | null) => void;
+  reportType: 'daily' | 'wish';
+  setReportType: (type: 'daily' | 'wish') => void;
+  wishContext: { category: string; target: string; content: string } | null;
+  setWishContext: (context: { category: string; target: string; content: string } | null) => void;
+  historicalScores: Record<string, number> | null;
   userPoints: number;
   isFirstPurchase: boolean;
   fetchUserPoints: () => Promise<void>;
@@ -38,7 +43,91 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userPoints, setUserPoints] = useState<number>(0);
   const [isFirstPurchase, setIsFirstPurchase] = useState<boolean>(true);
   const [isPurchaseModalOpen, setIsPurchaseModalOpen] = useState(false);
+  const [reportType, setReportType] = useState<'daily' | 'wish'>('daily');
+  const [wishContext, setWishContext] = useState<{ category: string; target: string; content: string } | null>(null);
+  const [historicalScores, setHistoricalScores] = useState<Record<string, number> | null>(null);
   const { language } = useLanguage();
+
+  const fetchHistoricalScores = useCallback(async () => {
+    const user = auth.currentUser;
+    if (!user) return;
+    try {
+      const res = await fetch(`/api/reports/history/${user.uid}?limit=10`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data && data.length > 0) {
+        const totals: Record<string, number> = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
+        data.forEach((r: any) => {
+          if (r.total_scores) {
+            Object.keys(totals).forEach(k => {
+              totals[k] += (r.total_scores[k] || 0);
+            });
+          }
+        });
+        Object.keys(totals).forEach(k => {
+          totals[k] = Math.round(totals[k] / data.length);
+        });
+        setHistoricalScores(totals);
+      }
+    } catch (err) {
+      console.error("Failed to fetch historical scores:", err);
+    }
+  }, []);
+
+  const syncPendingReports = useCallback(async () => {
+    const pendingIds = JSON.parse(localStorage.getItem('eunie_pending_sync') || '[]');
+    if (pendingIds.length === 0) return;
+
+    console.log(`Syncing ${pendingIds.length} pending reports...`);
+    const history = JSON.parse(localStorage.getItem('eunie_report_history') || '[]');
+    const user = auth.currentUser;
+    const userId = user?.uid || null;
+
+    for (const id of pendingIds) {
+      const reportData = history.find((r: any) => r.id === id);
+      if (!reportData) continue;
+
+      try {
+        const response = await fetch('/api/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: reportData.id,
+            userId: userId,
+            dominantElement: reportData.dominantElement,
+            weakElement: reportData.weakElement,
+            balanceScore: reportData.balanceScore,
+            todayTheme: reportData.todayTheme,
+            isAiComplete: reportData.isAiComplete,
+            // All other fields
+            interpretation: reportData.interpretation,
+            pairInterpretations: reportData.pairInterpretations,
+            cardInterpretation: reportData.cardInterpretation,
+            psychologicalInsight: reportData.psychologicalInsight,
+            fiveElementAnalysis: reportData.fiveElementAnalysis,
+            reflection: reportData.reflection,
+            actionSuggestion: reportData.actionSuggestion,
+            manifestationGuidance: reportData.manifestationGuidance,
+            energyObstacles: reportData.energyObstacles,
+            multilingualContent: reportData.multilingualContent,
+            selectedImageIds: reportData.selectedImageIds,
+            selectedWordIds: reportData.selectedWordIds,
+            totalScores: reportData.totalScores,
+            pairs: reportData.pairs,
+            reportType: reportData.reportType,
+            wishContext: reportData.wishContext
+          })
+        });
+
+        if (response.ok) {
+          const pending = JSON.parse(localStorage.getItem('eunie_pending_sync') || '[]');
+          localStorage.setItem('eunie_pending_sync', JSON.stringify(pending.filter((pid: string) => pid !== id)));
+        }
+      } catch (err) {
+        console.error(`Failed to sync report ${id}:`, err);
+      }
+    }
+  }, []);
 
   const fetchUserPoints = useCallback(async () => {
     const user = auth.currentUser;
@@ -57,6 +146,7 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         fetchUserPoints();
+        fetchHistoricalScores();
         syncPendingReports();
       } else {
         // Reset state on logout
@@ -66,10 +156,13 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setSelectedCards({ images: [], words: [], drawnAt: 0 });
         setCurrentStep(0);
         setIsCompleted(false);
+        setReportType('daily');
+        setWishContext(null);
+        setHistoricalScores(null);
       }
     });
     return () => unsubscribe();
-  }, [fetchUserPoints]);
+  }, [fetchUserPoints, fetchHistoricalScores, syncPendingReports]);
 
   const startDraw = useCallback(async () => {
     setIsDrawing(true);
@@ -136,6 +229,7 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentStep(0);
     setIsCompleted(false);
     setReport(null);
+    setWishContext(null);
   }, []);
 
   const generateReport = useCallback(async (): Promise<AnalysisReport | null> => {
@@ -211,11 +305,20 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const runBackgroundTasks = async () => {
         try {
           // Get AI Analysis
-          const aiAnalysis = await generateAIAnalysis(selectedCards, analysis.totalScores, language);
+          const aiAnalysis = await generateAIAnalysis(
+            selectedCards, 
+            analysis.totalScores, 
+            language,
+            reportType,
+            wishContext || undefined,
+            historicalScores || undefined
+          );
           
           const finalReport: AnalysisReport = {
             ...initialReport,
             ...aiAnalysis,
+            reportType, // Store report type in report object
+            wishContext,
             isAiComplete: true
           };
 
@@ -233,6 +336,8 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   id: data.id,
                   userId: userId,
                   lang: language, // Added language tag
+                  reportType: data.reportType,
+                  wishContext: data.wishContext,
                   dominantElement: data.dominantElement,
                   weakElement: data.weakElement,
                   balanceScore: data.balanceScore,
@@ -245,6 +350,8 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   fiveElementAnalysis: data.fiveElementAnalysis,
                   reflection: data.reflection,
                   actionSuggestion: data.actionSuggestion,
+                  manifestationGuidance: data.manifestationGuidance,
+                  energyObstacles: data.energyObstacles,
                   multilingualContent: data.multilingualContent,
                   selectedImageIds: data.selectedImageIds,
                   selectedWordIds: data.selectedWordIds,
@@ -280,67 +387,10 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [selectedCards, language, userPoints, fetchUserPoints]);
 
-  const syncPendingReports = useCallback(async () => {
-    const pendingIds = JSON.parse(localStorage.getItem('eunie_pending_sync') || '[]');
-    if (pendingIds.length === 0) return;
-
-    console.log(`Syncing ${pendingIds.length} pending reports...`);
-    const history = JSON.parse(localStorage.getItem('eunie_report_history') || '[]');
-    const user = auth.currentUser;
-    const userId = user?.uid || null;
-
-    for (const id of pendingIds) {
-      const reportData = history.find((r: any) => r.id === id);
-      if (!reportData) continue;
-
-      try {
-        const response = await fetch('/api/reports', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: reportData.id,
-            userId: userId,
-            dominantElement: reportData.dominantElement,
-            weakElement: reportData.weakElement,
-            balanceScore: reportData.balanceScore,
-            todayTheme: reportData.todayTheme,
-            isAiComplete: reportData.isAiComplete,
-            // All other fields
-            interpretation: reportData.interpretation,
-            pairInterpretations: reportData.pairInterpretations,
-            cardInterpretation: reportData.cardInterpretation,
-            psychologicalInsight: reportData.psychologicalInsight,
-            fiveElementAnalysis: reportData.fiveElementAnalysis,
-            reflection: reportData.reflection,
-            actionSuggestion: reportData.actionSuggestion,
-            multilingualContent: reportData.multilingualContent,
-            selectedImageIds: reportData.selectedImageIds,
-            selectedWordIds: reportData.selectedWordIds,
-            totalScores: reportData.totalScores,
-            pairs: reportData.pairs
-          })
-        });
-
-        if (response.ok) {
-          const pending = JSON.parse(localStorage.getItem('eunie_pending_sync') || '[]');
-          localStorage.setItem('eunie_pending_sync', JSON.stringify(pending.filter((pid: string) => pid !== id)));
-        }
-      } catch (err) {
-        console.error(`Failed to sync report ${id}:`, err);
-      }
-    }
-  }, []);
-
   useEffect(() => {
     // Initial sync on mount
     syncPendingReports();
-    
-    // Also sync when auth state changes
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) syncPendingReports();
-    });
-    
-    return () => unsubscribe();
+    return () => {};
   }, [syncPendingReports]);
 
   return (
@@ -357,6 +407,11 @@ export const TestProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAssociations,
       generateReport,
       setReport,
+      reportType,
+      setReportType,
+      wishContext,
+      setWishContext,
+      historicalScores,
       userPoints,
       isFirstPurchase,
       fetchUserPoints,

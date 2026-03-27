@@ -443,11 +443,11 @@ async function startServer() {
 
   // Sessions API
   app.post("/api/sessions", async (req, res) => {
-    const { user_id, image_cards, word_cards } = req.body;
+    const { user_id, image_cards, word_cards, report_type, wish_context } = req.body;
     try {
       const result = await pool.query(
-        "INSERT INTO sessions (user_id, image_cards, word_cards) VALUES ($1, $2, $3) RETURNING id",
-        [user_id, JSON.stringify(image_cards), JSON.stringify(word_cards)]
+        "INSERT INTO sessions (user_id, image_cards, word_cards, report_type, wish_context) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+        [user_id, JSON.stringify(image_cards), JSON.stringify(word_cards), report_type || 'daily', JSON.stringify(wish_context || {})]
       );
       res.status(201).json({ id: result.rows[0].id });
     } catch (err) {
@@ -579,6 +579,8 @@ async function startServer() {
         id: row.id,
         userId: row.user_id,
         timestamp: new Date(row.timestamp).getTime(),
+        reportType: row.report_type,
+        wishContext: row.wish_context,
         isAiComplete: row.is_ai_complete,
         dominantElement: row.dominant_element,
         weakElement: row.weak_element,
@@ -684,6 +686,8 @@ async function startServer() {
           id: row.id,
           userId: row.user_id,
           timestamp: new Date(row.timestamp).getTime(),
+          reportType: row.report_type,
+          wishContext: row.wish_context,
           isAiComplete: row.is_ai_complete,
           dominantElement: row.dominant_element,
           weakElement: row.weak_element,
@@ -720,6 +724,8 @@ async function startServer() {
       id, 
       userId, 
       lang,
+      reportType,
+      wishContext,
       dominantElement, 
       weakElement, 
       balanceScore, 
@@ -729,7 +735,7 @@ async function startServer() {
       ...otherData 
     } = req.body;
 
-    console.log(`[API] POST /api/reports - Saving report: ${id || 'NEW'} for: ${userId || 'GUEST'} (lang: ${lang})`);
+    console.log(`[API] POST /api/reports - Saving report: ${id || 'NEW'} for: ${userId || 'GUEST'} (lang: ${lang}, type: ${reportType})`);
 
     try {
       // 1. Ensure user exists if userId is provided (Auto-Sync)
@@ -746,12 +752,14 @@ async function startServer() {
       if (id) {
         result = await pool.query(
           `INSERT INTO energy_reports (
-            id, user_id, lang, dominant_element, weak_element, balance_score, 
+            id, user_id, lang, report_type, wish_context, dominant_element, weak_element, balance_score, 
             today_theme, share_thumbnail, is_ai_complete, report_data
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
           ON CONFLICT (id) DO UPDATE SET
             user_id = COALESCE(EXCLUDED.user_id, energy_reports.user_id),
             lang = COALESCE(EXCLUDED.lang, energy_reports.lang),
+            report_type = COALESCE(EXCLUDED.report_type, energy_reports.report_type),
+            wish_context = COALESCE(EXCLUDED.wish_context, energy_reports.wish_context),
             dominant_element = COALESCE(EXCLUDED.dominant_element, energy_reports.dominant_element),
             weak_element = COALESCE(EXCLUDED.weak_element, energy_reports.weak_element),
             balance_score = COALESCE(EXCLUDED.balance_score, energy_reports.balance_score),
@@ -760,15 +768,15 @@ async function startServer() {
             is_ai_complete = COALESCE(EXCLUDED.is_ai_complete, energy_reports.is_ai_complete),
             report_data = energy_reports.report_data || EXCLUDED.report_data
           RETURNING *`,
-          [id, userId, lang || 'zh', dominantElement, weakElement, balanceScore, todayTheme, shareThumbnail, isAiComplete || false, JSON.stringify(otherData)]
+          [id, userId, lang || 'zh', reportType || 'daily', JSON.stringify(wishContext || null), dominantElement, weakElement, balanceScore, todayTheme, shareThumbnail, isAiComplete || false, JSON.stringify(otherData)]
         );
       } else {
         result = await pool.query(
           `INSERT INTO energy_reports (
-            user_id, lang, dominant_element, weak_element, balance_score, 
+            user_id, lang, report_type, wish_context, dominant_element, weak_element, balance_score, 
             today_theme, share_thumbnail, is_ai_complete, report_data
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-          [userId, lang || 'zh', dominantElement, weakElement, balanceScore, todayTheme, shareThumbnail, isAiComplete || false, JSON.stringify(otherData)]
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+          [userId, lang || 'zh', reportType || 'daily', JSON.stringify(wishContext || null), dominantElement, weakElement, balanceScore, todayTheme, shareThumbnail, isAiComplete || false, JSON.stringify(otherData)]
         );
       }
       
@@ -1945,6 +1953,8 @@ async function initializeDatabase(pool: pg.Pool) {
         id TEXT PRIMARY KEY,
         user_id TEXT REFERENCES users(uid),
         lang TEXT DEFAULT 'zh',
+        report_type TEXT DEFAULT 'daily',
+        wish_context JSONB,
         dominant_element TEXT,
         weak_element TEXT,
         balance_score FLOAT,
@@ -1963,6 +1973,8 @@ async function initializeDatabase(pool: pg.Pool) {
       ALTER TABLE energy_reports ADD COLUMN IF NOT EXISTS dominant_element TEXT;
       ALTER TABLE energy_reports ADD COLUMN IF NOT EXISTS is_ai_complete BOOLEAN DEFAULT FALSE;
       ALTER TABLE energy_reports ADD COLUMN IF NOT EXISTS timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+      ALTER TABLE energy_reports ADD COLUMN IF NOT EXISTS report_type TEXT DEFAULT 'daily';
+      ALTER TABLE energy_reports ADD COLUMN IF NOT EXISTS wish_context JSONB;
     `);
 
     // Sessions table
@@ -1970,6 +1982,8 @@ async function initializeDatabase(pool: pg.Pool) {
       CREATE TABLE IF NOT EXISTS sessions (
         id SERIAL PRIMARY KEY,
         user_id TEXT REFERENCES users(uid),
+        report_type TEXT DEFAULT 'daily',
+        wish_context JSONB,
         image_cards JSONB,
         word_cards JSONB,
         pairs JSONB,
@@ -1984,6 +1998,8 @@ async function initializeDatabase(pool: pg.Pool) {
       ALTER TABLE sessions ADD COLUMN IF NOT EXISTS session_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
       ALTER TABLE sessions ADD COLUMN IF NOT EXISTS pairs JSONB;
       ALTER TABLE sessions ADD COLUMN IF NOT EXISTS association_text JSONB;
+      ALTER TABLE sessions ADD COLUMN IF NOT EXISTS report_type TEXT DEFAULT 'daily';
+      ALTER TABLE sessions ADD COLUMN IF NOT EXISTS wish_context JSONB;
     `);
 
     // AI Prompts table

@@ -4,6 +4,7 @@ import { Button } from '../components/ui/Button';
 import { Sparkles, ArrowRight, Activity, Calendar, Zap } from 'lucide-react';
 import { useLanguage } from '../i18n/LanguageContext';
 import { useAuth } from '../hooks/useAuth';
+import { useTest } from '../store/TestContext';
 import { LoopStage } from '../App';
 import { AuthPromptModal } from '../components/AuthPromptModal';
 
@@ -72,15 +73,19 @@ const StatusCard = ({ title, value, icon: Icon, delay = 0 }: { title: string; va
 export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, streak = 0 }) => {
   const { profile, login } = useAuth();
   const { t, language } = useLanguage();
+  const { setReportType } = useTest();
   const [lastEnergy, setLastEnergy] = useState<string | null>(null);
-  const [recentReports, setRecentReports] = useState<any[]>([]);
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
+  const [weeklyCount, setWeeklyCount] = useState(0);
+  const [latestInsight, setLatestInsight] = useState<string | null>(null);
+  const [balanceScore, setBalanceScore] = useState(0);
 
-  const handleStartTest = () => {
+  const handleStartTest = (type: 'daily' | 'wish' = 'daily') => {
     if (!profile?.uid) {
       setIsAuthPromptOpen(true);
       return;
     }
+    setReportType(type);
     onStartTest();
   };
 
@@ -97,21 +102,41 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
           if (data.reports && data.reports.length > 0) {
             const latest = data.reports[0];
             setLastEnergy(latest.dominantElement || null);
-            setRecentReports(data.reports.slice(0, 7).reverse());
+            setBalanceScore(latest.balanceScore || 0);
+            
+            // Extract insight quote if available
+            if (latest.analysis && latest.analysis.psychologicalInsight) {
+              setLatestInsight(latest.analysis.psychologicalInsight);
+            }
+
+            // Calculate weekly count
+            const now = new Date();
+            const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const weekly = data.reports.filter((r: any) => new Date(r.createdAt) >= oneWeekAgo).length;
+            setWeeklyCount(weekly);
           }
         })
         .catch(() => setLastEnergy(null));
     }
   }, [profile?.uid]);
 
-  const getStatusText = () => {
-    if (loopStage === 'calibration') return t('home_status_pending');
-    if (loopStage === 'completed') return t('home_status_calibrated');
-    return t('home_continue_loop');
+  const getEnergyAdvice = () => {
+    if (balanceScore < 70) {
+      return {
+        suitable: t('home_wait'),
+        unsuitable: t('home_decision')
+      };
+    }
+    return {
+      suitable: t('home_decision'),
+      unsuitable: t('home_wait')
+    };
   };
 
+  const advice = getEnergyAdvice();
+
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-6 py-24">
+    <div className="relative min-h-screen flex flex-col items-center justify-start px-6 py-24">
       <EnergyField />
 
       {/* Vertical Side Text */}
@@ -127,9 +152,9 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
         </span>
       </motion.div>
 
-      <div className="ma-container relative z-10 w-full max-w-4xl space-y-24 md:space-y-36">
+      <div className="ma-container relative z-10 w-full max-w-4xl space-y-16 md:space-y-24">
         {/* Header Section */}
-        <div className="text-center space-y-12 mb-24 -mt-[50px] md:mt-0 w-[264px] md:w-full mx-auto">
+        <div className="text-center space-y-8 mb-12 -mt-[20px] md:mt-0 w-full mx-auto">
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -139,12 +164,12 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
             {t('home_top_slogan')}
           </motion.div>
           
-          <div className="space-y-10">
+          <div className="space-y-6">
             <motion.h1 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1.8, delay: 0.3 }}
-              className="text-[38px] md:text-6xl font-serif font-extralight text-ink/80 leading-[1.3] tracking-tight"
+              className="text-[32px] md:text-5xl font-serif font-extralight text-ink/80 leading-[1.3] tracking-tight"
             >
               {t('home_hero_title')}
             </motion.h1>
@@ -153,138 +178,162 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 2, delay: 0.8 }}
-              className="h-px w-10 bg-ink/10 mx-auto -mt-5"
+              className="h-px w-10 bg-ink/10 mx-auto"
             />
-
-            <motion.p
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 1.8, delay: 1.2 }}
-              className="text-xs md:text-base text-ink/40 font-light tracking-[0.3em] -mt-5"
-            >
-              {t('home_hero_desc')}
-            </motion.p>
           </div>
         </div>
 
-        {/* Action Section */}
+        {/* Dashboard Section */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.8, delay: 1.5 }}
-          className="flex flex-col items-center gap-16 md:gap-24"
+          transition={{ duration: 1.8, delay: 1 }}
+          className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full"
         >
-          {/* Dashboard Grid - Moved Above Button */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-3xl -mt-10 md:-mt-[80px] p-0 mb-0">
-            <StatusCard 
-              title={t('home_status_title')} 
-              value={getStatusText()} 
-              icon={Activity} 
-              delay={1.5}
-            />
-            <StatusCard 
-              title={t('home_streak_title' as any)} 
-              value={streak > 0 ? `${streak} ${t('home_streak_unit' as any)}` : t('home_yesterday_none')} 
-              icon={Zap} 
-              delay={1.7}
-            />
-          </div>
+          {/* Weekly Stats */}
+          <StatusCard 
+            title={t('home_weekly_count' as any)} 
+            value={`${weeklyCount} ${t('home_streak_unit' as any)}`} 
+            icon={Calendar} 
+            delay={1.2}
+          />
 
-          {/* Growth Trajectory (New) */}
-          {recentReports.length > 0 && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 2, delay: 2 }}
-              className="w-full max-w-2xl px-4 space-y-6 md:mt-[-50px] md:mb-0"
-            >
-              <div className="flex items-center justify-between px-2">
-                <span className="text-[9px] tracking-[0.3em] uppercase text-ink/30 font-medium">
-                  {t('home_growth_title' as any)}
-                </span>
-                <span className="text-[9px] tracking-[0.3em] uppercase text-ink/20 font-light">
-                  {t('home_growth_subtitle' as any)}
-                </span>
-              </div>
-              <div className="flex items-end justify-between h-16 px-4 border-b border-ink/[0.03]">
-                {recentReports.map((report, idx) => (
-                  <div key={report.id} className="flex flex-col items-center gap-3 group relative">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${(report.balanceScore || 50)}%` }}
-                      transition={{ duration: 1.5, delay: 2.2 + (idx * 0.1) }}
-                      className={`w-1.5 rounded-t-full transition-all duration-500 ${
-                        report.dominantElement === 'wood' ? 'bg-wood' :
-                        report.dominantElement === 'fire' ? 'bg-fire' :
-                        report.dominantElement === 'earth' ? 'bg-earth' :
-                        report.dominantElement === 'metal' ? 'bg-metal' :
-                        'bg-water'
-                      } opacity-40 group-hover:opacity-100`}
-                    />
-                    <div className="absolute -top-8 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur-md px-2 py-1 rounded-md border border-ink/5 text-[8px] text-ink/60 whitespace-nowrap z-20">
-                      {report.balanceScore}% {t('home_balance_label' as any)}
-                    </div>
-                  </div>
-                ))}
-                {/* Fill empty days if less than 7 */}
-                {Array.from({ length: Math.max(0, 7 - recentReports.length) }).map((_, i) => (
-                  <div key={`empty-${i}`} className="w-1.5 h-1 bg-ink/[0.03] rounded-t-full" />
-                ))}
-              </div>
-            </motion.div>
-          )}
-
-          {loopStage === 'calibration' ? (
-            <Button 
-              onClick={handleStartTest}
-              className="group relative overflow-hidden h-16 md:h-20 px-16 md:px-24 rounded-full text-sm md:text-base tracking-[0.5em] bg-ink text-white hover:bg-ink/90 shadow-2xl shadow-ink/10 transition-all duration-700 md:mt-[-40px]"
-            >
-              <span className="relative z-10 flex items-center gap-4">
-                {t('home_start_btn')}
-                <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform duration-700" />
-              </span>
-            </Button>
-          ) : (
-            <div className="flex flex-wrap justify-center gap-8 md:-mt-[30px]">
-              <Button 
-                onClick={() => onNavigate(loopStage === 'resonance' ? 'ocean' : 'history')}
-                className="h-14 px-10 rounded-full text-[10px] tracking-[0.4em] bg-ink text-white hover:bg-ink/90 shadow-xl shadow-ink/10"
-              >
-                {t('home_continue_loop')}
-              </Button>
-              <Button 
-                onClick={handleStartTest}
-                variant="outline"
-                className="h-14 px-10 rounded-full text-[10px] tracking-[0.4em] border-ink/10 text-ink/30 hover:text-ink hover:border-ink/20"
-              >
-                {t('report_new_test')}
-              </Button>
+          {/* Energy Status Advice */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1.5, delay: 1.4, ease: [0.22, 1, 0.36, 1] }}
+            className="bg-white/30 backdrop-blur-2xl border border-white/50 p-6 rounded-[2rem] flex flex-col gap-3 shadow-sm"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] tracking-[0.3em] uppercase text-ink/40 font-medium">{t('home_energy_status' as any)}</span>
+              <Activity size={14} className="text-ink/20" />
             </div>
-          )}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-emerald-600/60 font-medium">{t('home_suitable' as any)}</span>
+                <span className="text-sm font-serif text-ink/70">「{advice.suitable}」</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-rose-600/60 font-medium">{t('home_not_suitable' as any)}</span>
+                <span className="text-sm font-serif text-ink/70">「{advice.unsuitable}」</span>
+              </div>
+            </div>
+          </motion.div>
 
-          {/* Five Elements Visualizer */}
-          <div className="flex gap-10 md:gap-16 pt-8">
-            {[
-              { id: 'wood', color: 'bg-wood' },
-              { id: 'fire', color: 'bg-fire' },
-              { id: 'earth', color: 'bg-earth' },
-              { id: 'metal', color: 'bg-metal' },
-              { id: 'water', color: 'bg-water' }
-            ].map((el, i) => (
-              <motion.div
-                key={el.id}
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: lastEnergy === el.id ? 1 : 0.1, scale: lastEnergy === el.id ? 1.2 : 1 }}
-                whileHover={{ opacity: 0.5, scale: 1.1 }}
-                transition={{ delay: 2.2 + (i * 0.1) }}
-                className="flex flex-col items-center gap-6 group cursor-default"
-              >
-                <div className={`w-1 h-1 rounded-full ${el.color} shadow-[0_0_10px_currentColor] transition-all duration-700`} />
-                <span className="text-[7px] tracking-[0.4em] text-ink/20 uppercase font-serif group-hover:text-ink/40 transition-colors duration-500">{t(`home_element_${el.id}`)}</span>
-              </motion.div>
-            ))}
-          </div>
+          {/* Streak */}
+          <StatusCard 
+            title={t('home_streak_title')} 
+            value={streak > 0 ? `${streak} ${t('home_streak_unit')}` : t('home_yesterday_none')} 
+            icon={Zap} 
+            delay={1.6}
+          />
         </motion.div>
+
+        {/* Insight Quote */}
+        {latestInsight && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 2, delay: 2 }}
+            className="text-center px-8 py-12 bg-ink/[0.02] rounded-[3rem] border border-ink/[0.03] relative overflow-hidden group"
+          >
+            <Sparkles className="absolute top-4 left-4 text-ink/5" size={24} />
+            <div className="text-[9px] tracking-[0.5em] text-ink/20 uppercase mb-6">{t('home_insight_quote' as any)}</div>
+            <p className="text-lg md:text-xl font-serif italic font-extralight text-ink/60 leading-relaxed max-w-2xl mx-auto">
+              「{latestInsight}」
+            </p>
+            <Sparkles className="absolute bottom-4 right-4 text-ink/5" size={24} />
+          </motion.div>
+        )}
+
+        {/* Action Section - Dual Entry Points */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl mx-auto">
+          {/* Heart's Wish Entry */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1.5, delay: 2.2 }}
+          >
+            <button 
+              onClick={() => handleStartTest('wish')}
+              className="w-full group relative overflow-hidden p-8 md:p-12 rounded-[3rem] bg-ink text-white shadow-2xl shadow-ink/20 transition-all duration-700 hover:scale-[1.02] active:scale-[0.98] text-left"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+                <Sparkles size={80} />
+              </div>
+              <div className="relative z-10 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center">
+                    <Sparkles size={16} />
+                  </div>
+                  <span className="text-[10px] tracking-[0.3em] uppercase text-white/40">{t('home_sparkle_cost' as any)}</span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-serif font-light tracking-wide">{t('home_wish_title' as any)}</h3>
+                <p className="text-xs text-white/40 font-light tracking-widest leading-relaxed max-w-[200px]">
+                  {t('home_wish_desc' as any)}
+                </p>
+                <div className="pt-4 flex items-center gap-2 text-[10px] tracking-[0.4em] uppercase text-white/60 group-hover:text-white transition-colors">
+                  {t('home_start_btn')} <ArrowRight size={12} className="group-hover:translate-x-2 transition-transform" />
+                </div>
+              </div>
+            </button>
+          </motion.div>
+
+          {/* Daily Energy Entry */}
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1.5, delay: 2.4 }}
+          >
+            <button 
+              onClick={() => handleStartTest('daily')}
+              className="w-full group relative overflow-hidden p-8 md:p-12 rounded-[3rem] bg-white border border-ink/5 text-ink shadow-xl shadow-ink/5 transition-all duration-700 hover:scale-[1.02] active:scale-[0.98] text-left"
+            >
+              <div className="absolute top-0 right-0 p-8 opacity-[0.03] group-hover:opacity-[0.08] transition-opacity">
+                <Activity size={80} />
+              </div>
+              <div className="relative z-10 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-ink/5 flex items-center justify-center">
+                    <Activity size={16} className="text-ink/40" />
+                  </div>
+                  <span className="text-[10px] tracking-[0.3em] uppercase text-ink/30">{t('home_sparkle_cost' as any)}</span>
+                </div>
+                <h3 className="text-2xl md:text-3xl font-serif font-light tracking-wide">{t('home_energy_title' as any)}</h3>
+                <p className="text-xs text-ink/30 font-light tracking-widest leading-relaxed max-w-[200px]">
+                  {t('home_energy_desc' as any)}
+                </p>
+                <div className="pt-4 flex items-center gap-2 text-[10px] tracking-[0.4em] uppercase text-ink/40 group-hover:text-ink transition-colors">
+                  {t('home_start_btn')} <ArrowRight size={12} className="group-hover:translate-x-2 transition-transform" />
+                </div>
+              </div>
+            </button>
+          </motion.div>
+        </div>
+
+        {/* Five Elements Visualizer */}
+        <div className="flex justify-center gap-10 md:gap-16 pt-8">
+          {[
+            { id: 'wood', color: 'bg-wood' },
+            { id: 'fire', color: 'bg-fire' },
+            { id: 'earth', color: 'bg-earth' },
+            { id: 'metal', color: 'bg-metal' },
+            { id: 'water', color: 'bg-water' }
+          ].map((el, i) => (
+            <motion.div
+              key={el.id}
+              initial={{ opacity: 0, scale: 0.5 }}
+              animate={{ opacity: lastEnergy === el.id ? 1 : 0.1, scale: lastEnergy === el.id ? 1.2 : 1 }}
+              whileHover={{ opacity: 0.5, scale: 1.1 }}
+              transition={{ delay: 3.5 + (i * 0.1) }}
+              className="flex flex-col items-center gap-6 group cursor-default"
+            >
+              <div className={`w-1 h-1 rounded-full ${el.color} shadow-[0_0_10px_currentColor] transition-all duration-700`} />
+              <span className="text-[7px] tracking-[0.4em] text-ink/20 uppercase font-serif group-hover:text-ink/40 transition-colors duration-500">{t(`home_element_${el.id}`)}</span>
+            </motion.div>
+          ))}
+        </div>
       </div>
 
       <AuthPromptModal 

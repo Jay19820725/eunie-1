@@ -66,8 +66,19 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
 
   useEffect(() => {
     // Initialize ambient audio
-    const storageBucket = import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'yuni-8f439.firebasestorage.app';
-    const audio = new Audio(`https://firebasestorage.googleapis.com/v0/b/${storageBucket}/o/eunie-assets%2Faudio%2Fwaves.MP3?alt=media&token=9b3dbc7c-6c56-447e-9c45-ac273d4fc4d4`);
+    const audio = new Audio(`https://firebasestorage.googleapis.com/v0/b/yuni-8f439.firebasestorage.app/o/eunie-assets%2Faudio%2Fwaves.MP3?alt=media&token=9b3dbc7c-6c56-447e-9c45-ac273d4fc4d4`);
+    
+    // Fallback logic if the primary waves audio fails
+    audio.addEventListener('error', () => {
+      console.warn("Ambient audio 'waves.MP3' failed to load, trying fallback...");
+      // Fallback to the seeded "Water" element track which is guaranteed to exist
+      audio.src = "https://firebasestorage.googleapis.com/v0/b/yuni-8f439.firebasestorage.app/o/eunie-assets%2Faudio%2FLittle%20River%20Breeze%20Tea%20Time%EF%BC%88%E6%B0%B4%EF%BC%89%20(1).mp3?alt=media&token=40dfaf97-93fb-4e74-bea2-d95fabd71b0c";
+      audio.load();
+      if (isAmbientPlaying) {
+        audio.play().catch(err => console.error("Fallback ambient play also failed:", err));
+      }
+    });
+
     audio.loop = true;
     audio.volume = 0;
     ambientAudioRef.current = audio;

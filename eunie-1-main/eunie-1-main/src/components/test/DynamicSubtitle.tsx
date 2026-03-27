@@ -12,6 +12,7 @@ export const DynamicSubtitle: React.FC<DynamicSubtitleProps> = ({ stage }) => {
   
   const getKeys = (): [string, string] => {
     switch (stage) {
+      case 'wish_input': return ['test_desc_wish_1', 'test_desc_wish_2'];
       case 'drawing_images': return ['test_desc_images_1', 'test_desc_images_2'];
       case 'drawing_words': return ['test_desc_words_1', 'test_desc_words_2'];
       case 'pairing': return ['test_desc_pairing_1', 'test_desc_pairing_2'];
