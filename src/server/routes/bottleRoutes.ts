@@ -117,27 +117,6 @@ router.post("/", async (req, res) => {
 router.get("/random", async (req, res) => {
   const { userId } = req.query;
   try {
-    const countResult = await pool.query(
-      `SELECT COUNT(*) 
-       FROM bottles b 
-       WHERE b.is_active = TRUE 
-         AND b.user_id != $1 
-         AND b.created_at > NOW() - INTERVAL '30 days'
-         AND b.id NOT IN (
-           SELECT bottle_id FROM saved_bottles WHERE user_id = $1
-           UNION
-           SELECT bottle_id FROM bottle_blessings WHERE user_id = $1
-         )`,
-      [userId || '']
-    );
-    
-    const count = parseInt(countResult.rows[0].count);
-    if (count === 0) {
-      return res.status(404).json({ error: "No bottles found in the ocean." });
-    }
-    
-    const randomOffset = Math.floor(Math.random() * count);
-    
     const result = await pool.query(
       `SELECT b.*, 
               COALESCE(b.sender_nickname, u.display_name) as sender_name,
@@ -163,8 +142,9 @@ router.get("/random", async (req, res) => {
            SELECT bottle_id FROM bottle_blessings WHERE user_id = $1
          )
        GROUP BY b.id, u.display_name, ci.image_url, ci.name, cw.image_url, cw.name, er.report_data, bt.zh, bt.ja
-       OFFSET $2 LIMIT 1`,
-      [userId || '', randomOffset]
+       ORDER BY RANDOM()
+       LIMIT 1`,
+      [userId || '']
     );
     
     if (result.rows.length === 0) {
