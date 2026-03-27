@@ -10,10 +10,12 @@ export const useEnergyTestState = (onComplete: () => void) => {
     setAssociations, 
     generateReport, 
     isDrawing, 
-    setSelectedCards 
+    setSelectedCards,
+    reportType,
+    setWishContext
   } = useTest();
 
-  const [drawStage, setDrawStage] = useState<DrawStage>('idle');
+  const [drawStage, setDrawStage] = useState<DrawStage>(reportType === 'wish' ? 'wish_input' : 'idle');
   const [flippedImages, setFlippedImages] = useState<number[]>([]);
   const [flippedWords, setFlippedWords] = useState<number[]>([]);
   const [hasRedrawnImages, setHasRedrawnImages] = useState(false);
@@ -44,6 +46,11 @@ export const useEnergyTestState = (onComplete: () => void) => {
 
   const handleStartShuffle = () => {
     setDrawStage('shuffling');
+  };
+
+  const handleWishSubmit = (context: { category: string; target: string; content: string }) => {
+    setWishContext(context);
+    setDrawStage('idle');
   };
 
   const handleShuffleComplete = useCallback(async () => {
@@ -134,6 +141,7 @@ export const useEnergyTestState = (onComplete: () => void) => {
     handlePairingComplete,
     handleAssociationComplete,
     handleComplete,
+    handleWishSubmit,
     handleRedrawAll,
     hasRedrawnWords,
     isReshuffling,

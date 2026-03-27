@@ -132,21 +132,6 @@ export const generateAIAnalysis = async (
   
   finalPrompt = `${langInstruction}\n\n${finalPrompt}`;
 
-  // Handle wish context injection if reportType is wish
-  if (reportType === 'wish' && wishContext) {
-    const wishData = currentLang === 'ja'
-      ? `領域: ${wishContext.category}\n対象/核心: ${wishContext.target}\n内容: ${wishContext.content}`
-      : `領域: ${wishContext.category}\n對象/核心: ${wishContext.target}\n內容: ${wishContext.content}`;
-      
-    if (finalPrompt.includes('{{WISH_CONTEXT}}')) {
-      finalPrompt = finalPrompt.replace('{{WISH_CONTEXT}}', wishData);
-    } else if (!finalPrompt.includes(currentLang === 'ja' ? "【彼女の悩み（心のざわつき）】" : "【她的煩惱（心中紛擾）】")) {
-      // Append only if it wasn't already hardcoded in the fallback prompt
-      const label = currentLang === 'ja' ? "【彼女の悩み（心のざわつき）】" : "【她的煩惱（心中紛擾）】";
-      finalPrompt += `\n\n${label}\n${wishData}`;
-    }
-  }
-
   if (finalPrompt.includes('{{USER_DATA}}')) {
     finalPrompt = finalPrompt.replace('{{USER_DATA}}', userData || "");
   } else {

@@ -51,14 +51,11 @@ export const PsychInsight: React.FC<PsychInsightProps> = ({ isAiLoading, display
                     </div>
                   </div>
                 )}
-                <div className="bg-gradient-to-br from-white/40 to-transparent p-6 rounded-3xl border border-white/60 mb-10 shadow-sm backdrop-blur-sm">
-                  <p className="text-[28px] md:text-[35px] font-serif leading-[1.6] font-extralight text-ink tracking-tight relative z-10">
-                    <span className="absolute -left-4 -top-4 text-6xl text-ink/5 font-serif select-none">"</span>
-                    {displayContent.psychologicalInsight}
-                  </p>
-                </div>
+                <p className="text-[28px] md:text-[35px] font-serif leading-[1.4] font-extralight text-ink tracking-tight mb-10">
+                  {displayContent.psychologicalInsight}
+                </p>
                 <div className="w-16 h-px bg-ink/20 mb-10" />
-                <div className="columns-1 md:columns-2 gap-10 text-[16px] text-ink-muted leading-[2.2] font-light tracking-wide">
+                <div className="columns-1 md:columns-2 gap-10 text-[16px] text-ink-muted leading-[2] font-light tracking-wide">
                   {displayContent.cardInterpretation}
                 </div>
 

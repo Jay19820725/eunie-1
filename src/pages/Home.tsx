@@ -134,23 +134,10 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
   const [lastEnergy, setLastEnergy] = useState<string | null>(null);
   const [weeklyWishes, setWeeklyWishes] = useState<number>(0);
   const [latestReport, setLatestReport] = useState<any>(null);
-  const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
 
   const handleStartTest = (type: 'daily' | 'wish' = 'daily') => {
-    if (!profile?.uid) {
-      setIsAuthPromptOpen(type === 'wish' ? false : true); // Adjust if needed, but usually we want login
-      if (!profile?.uid) {
-        setIsAuthPromptOpen(true);
-        return;
-      }
-    }
     onStartTest(type);
-  };
-
-  const handleAuthSuccess = () => {
-    // After successful login, automatically start the test
-    onStartTest('daily');
   };
 
   useEffect(() => {
@@ -382,12 +369,6 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
           </div>
         </motion.div>
       </div>
-
-      <AuthPromptModal 
-        isOpen={isAuthPromptOpen} 
-        onClose={() => setIsAuthPromptOpen(false)}
-        onSuccess={handleAuthSuccess}
-      />
 
       <SoulQuoteModal 
         isOpen={isQuoteModalOpen}

@@ -4,7 +4,6 @@ import { X, Sparkles, CreditCard, Check, ShieldCheck, Zap } from 'lucide-react';
 import { Button } from './ui/Button';
 import { useLanguage } from '../i18n/LanguageContext';
 import { auth } from '../lib/firebase';
-import { trackGrowthEvent } from '../utils/growthAnalytics';
 
 interface PurchaseModalProps {
   isOpen: boolean;
@@ -66,7 +65,6 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, o
   const handleSelectPlan = (planId: any) => {
     setSelectedPlan(planId);
     setStep('payment');
-    trackGrowthEvent('purchase_started', { plan_type: planId });
   };
 
   const handleSimulatePayment = async () => {
@@ -86,11 +84,6 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, o
       });
 
       if (response.ok) {
-        trackGrowthEvent('message_cta_click', {
-          source: 'purchase_modal',
-          plan_type: selectedPlan,
-          status: 'success'
-        });
         onSuccess();
         onClose();
       }

@@ -71,16 +71,28 @@ export interface CardPair {
 
 export interface SelectedCards {
   sessionId?: string;
+  reportType?: ReportType;
+  wishContext?: WishContext;
   images: ImageCard[];
   words: WordCard[];
   pairs?: CardPair[];
   drawnAt: number;
 }
 
+export type ReportType = 'daily' | 'wish';
+
+export interface WishContext {
+  domains: string[]; // e.g., ['career', 'love', 'health']
+  targets: Record<string, string>; // domain -> target/person
+  contents: Record<string, string>; // domain -> specific wish content
+}
+
 export interface AnalysisReport {
   id: string;
   userId?: string;
   timestamp: number;
+  reportType?: ReportType;
+  wishContext?: WishContext;
   selectedImageIds: string[];
   selectedWordIds: string[];
   totalScores: FiveElementValues; // Normalized percentages
@@ -99,6 +111,10 @@ export interface AnalysisReport {
   reflection?: string;
   actionSuggestion?: string;
   shareThumbnail?: string;
+
+  // Wish Specific AI Content
+  manifestationGuidance?: string; // 顯化指引
+  energyObstacles?: string; // 能量阻礙分析
 
   // Multilingual Content
   multilingualContent?: {
@@ -220,7 +236,7 @@ export interface ChatMessage {
   energyUpdate?: FiveElementValues;
 }
 
-export type DrawStage = 'idle' | 'shuffling' | 'drawing_images' | 'drawing_words' | 'pairing' | 'associating' | 'revealed';
+export type DrawStage = 'idle' | 'wish_input' | 'shuffling' | 'drawing_images' | 'drawing_words' | 'pairing' | 'associating' | 'revealed';
 
 export type EnergyReportData = AnalysisReport;
 
@@ -238,6 +254,7 @@ export interface Bottle {
   lang: string;
   origin_locale: string;
   energy_color_tag?: string;
+  tag_id?: string;
   hug_count?: number;
   card_id?: string;
   quote?: string;
@@ -258,13 +275,17 @@ export interface Bottle {
   reply_message?: string; // For saved bottles
   saved_id?: string; // For saved bottles
   saved_at?: string; // For saved bottles
+  tag_zh?: string; // Joined from bottle_tags
+  tag_ja?: string; // Joined from bottle_tags
 }
 
 export interface BottleTag {
   id: string;
-  text_zh: string;
-  text_ja: string;
-  category: string;
+  tag: string;
+  zh: string;
+  ja: string;
+  sort_order: number;
+  is_active: boolean;
   created_at: string;
 }
 

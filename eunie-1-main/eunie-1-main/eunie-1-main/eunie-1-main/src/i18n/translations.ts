@@ -68,6 +68,18 @@ export const translations = {
     ocean_go_to_test: "前往測試",
     login_required_to_cast: "請先登入後再製作瓶中信。",
     ocean_cast_limit: "字數限制：{count}/100",
+    ocean_no_bottles: "目前海洋很平靜，暫時沒有新的訊息了。",
+    ocean_select_tag: "選擇祝福標籤",
+    tag_peace: "平安健康",
+    tag_success: "順心如意",
+    tag_wealth: "財源廣進",
+    tag_career: "事業有成",
+    tag_study: "學業進步",
+    tag_love: "感情美滿",
+    tag_family: "家庭和睦",
+    tag_luck: "萬事大吉",
+    tag_wish: "心想事成",
+    tag_blessing: "福氣滿滿",
     
     // Home Page
     home_top_slogan: "EUNIE 嶼妳 — 懂妳的能量，平衡妳的生活",
@@ -92,6 +104,33 @@ export const translations = {
     home_growth_title: "能量成長軌跡",
     home_growth_subtitle: "過去 7 日",
     home_balance_label: "平衡度",
+    home_weekly_count: "本週紀錄次數",
+    home_energy_status: "能量狀態",
+    home_suitable: "適合",
+    home_not_suitable: "不適合",
+    home_decision: "做決策",
+    home_wait: "靜觀其變",
+    home_insight_quote: "心理洞察",
+    home_wish_title: "心中祈願",
+    home_wish_desc: "投射正向意圖，加速顯化",
+    home_energy_title: "今日能量狀態",
+    home_energy_desc: "校準內在頻率，找回平衡",
+    home_sparkle_cost: "1 點靈光",
+
+    // Wish Input
+    wish_input_title: '心中祈願',
+    wish_input_desc: '請選擇一個祈願領域，並寫下你的目標或對象。',
+    wish_category_label: '祈願領域',
+    wish_target_label: '祈願對象 / 目標',
+    wish_target_placeholder: '例如：我自己、我的伴侶、某個具體項目',
+    wish_content_label: '祈願內容',
+    wish_content_placeholder: '請寫下你內心最真實的願望...',
+    wish_next_btn: '開始共鳴',
+    wish_category_career: '事業學業',
+    wish_category_love: '情感人際',
+    wish_category_health: '身心健康',
+    wish_category_wealth: '財富豐盛',
+    wish_category_other: '其他',
 
     // Energy Test Page
     test_step_1: "第一步",
@@ -105,6 +144,8 @@ export const translations = {
     test_title_associating: "潛意識對話",
     test_title_revealed: "啟示",
     test_title_ritual: "神聖契引",
+    test_desc_wish_1: "投射意圖",
+    test_desc_wish_2: "在心中清晰描繪妳的願望與目標",
     test_desc_images: "讓心慢慢安靜，選擇與此刻頻率共鳴的圖像。",
     test_desc_words: "接著，找出與妳現狀產生共鳴的詞彙。",
     test_desc_pairing: "將圖像與文字連結，感受其中流動的能量。",
@@ -182,6 +223,8 @@ export const translations = {
     report_five_element: "五行能量分析",
     report_reflection: "與內在的深度對話",
     report_action: "行動建議",
+    report_manifestation_guidance: "顯化指引",
+    report_energy_obstacles: "能量阻礙",
     report_new_test: "開始新的探索",
     report_weaving: "正在編織訊息...",
     report_weaving_coffee: "正在編織妳的靈魂訊息...\n趁這段時間，去倒杯咖啡或深呼吸三次吧。\n當妳回來時，一切都會準備就緒。",
@@ -277,35 +320,6 @@ export const translations = {
     ocean_saved_reply_label: "妳的共鳴筆記",
     ocean_save_limit_error: "收藏數量已達上限 (20 封)",
 
-    // Revenue & Points
-    points_low_title: "靈光能量微弱",
-    points_low_body: "您的靈光即將耗盡，建議提前採集以維持能量校準。",
-    points_empty_title: "能量已耗盡",
-    points_empty_body: "目前的靈光不足以開啟深度報告，請前往採集。",
-    points_pre_consume_hint: "開啟這份深度報告將消耗 1 點靈光，準備好開始了嗎？",
-    points_remaining: "剩餘靈光",
-    points_scarcity_hint: "您的能量僅能支撐最後 {count} 次探索",
-
-    // Progress & Achievement
-    milestone_streak_title: "持續共鳴中",
-    milestone_streak_body: "妳已連續 {count} 天與內在對話，這份堅持正讓妳變得更強大。",
-    milestone_reports_title: "能量地圖擴張",
-    milestone_reports_body: "妳已累積了 {count} 份能量紀錄，這將成為妳寶貴的靈魂數據。",
-
-    // Re-engagement & Emotional Hooks
-    reengage_morning_title: "早安，今天的頻率是？",
-    reengage_morning_body: "在晨曦中，花三分鐘為自己進行能量校準吧。",
-    reengage_night_title: "深夜的沈澱時間",
-    reengage_night_body: "忙碌了一天，透過卡片聽聽內在被忽略的聲音。",
-    reengage_anxious_title: "感到心浮氣躁嗎？",
-    reengage_anxious_body: "停下腳步，讓卡片的隱喻為妳帶來平靜的視角。",
-
-    // System & Growth
-    sys_error_title: "能量流動受阻",
-    sys_error_body: "目前的連線有些不穩定，請稍後再試。",
-    growth_next_step_title: "下一步建議",
-    growth_next_step_body: "妳的能量趨於平衡，要不要去海洋分享這份喜悅？",
-
     // Milestone 4: Ocean Resonance
     ocean_resonance_success_title: "靈魂共鳴已完成",
     ocean_resonance_success_desc: "妳的能量已在海洋中迴盪。要不要將此刻的感受，記錄在內在沈澱（日誌）中？",
@@ -316,6 +330,11 @@ export const translations = {
     loop_completion_title: "今日能量閉環已達成",
     loop_completion_desc: "校準、共鳴、沈澱。妳在今日完成了與自己、與世界的溫柔連結。帶著這份平靜的能量，祝妳好夢。",
     loop_completion_btn: "度過了美好的一天",
+    
+    // Auth Prompt
+    auth_prompt_title: "開啟靈魂之旅",
+    auth_prompt_desc: "為了保存您的能量報告並開啟每日成長追蹤，請先登入您的專屬空間。",
+    auth_prompt_login_btn: "開啟靈魂之旅 (Google 登入)",
   },
   ja: {
     // General
@@ -386,6 +405,18 @@ export const translations = {
     ocean_go_to_test: "診断へ行く",
     login_required_to_cast: "瓶中信を作るにはログインが必要です。",
     ocean_cast_limit: "文字数制限：{count}/100",
+    ocean_no_bottles: "現在、海は穏やかです。新しいメッセージはまだありません。",
+    ocean_select_tag: "祝福タグを選択",
+    tag_peace: "平穏無事",
+    tag_success: "思い通り",
+    tag_wealth: "金運上昇",
+    tag_career: "仕事成就",
+    tag_study: "学業成就",
+    tag_love: "恋愛成就",
+    tag_family: "家庭円満",
+    tag_luck: "万事大吉",
+    tag_wish: "願望成就",
+    tag_blessing: "福徳円満",
 
     // Home Page
     home_top_slogan: "EUNIE 嶼妳 — あなたのエネルギーを知り、生活を整える",
@@ -410,6 +441,33 @@ export const translations = {
     home_growth_title: "エネルギー成長の軌跡",
     home_growth_subtitle: "過去 7 日間",
     home_balance_label: "バランス度",
+    home_weekly_count: "今週の記録回数",
+    home_energy_status: "エネルギー状態",
+    home_suitable: "適しています",
+    home_not_suitable: "適していません",
+    home_decision: "決断を下す",
+    home_wait: "静観する",
+    home_insight_quote: "心理的洞察",
+    home_wish_title: "心中祈願",
+    home_wish_desc: "ポジティブな意図を投影し、具現化を加速させる",
+    home_energy_title: "今日エネルギー状態",
+    home_energy_desc: "内なる周波数を校正し、バランスを取り戻す",
+    home_sparkle_cost: "1 霊光",
+
+    // Wish Input
+    wish_input_title: '心中祈願',
+    wish_input_desc: '祈願の領域を選択し、目標や対象を記入してください。',
+    wish_category_label: '祈願の領域',
+    wish_target_label: '祈願の対象 / 目標',
+    wish_target_placeholder: '例：自分自身、パートナー、具体的なプロジェクト',
+    wish_content_label: '祈願の内容',
+    wish_content_placeholder: 'あなたの心の奥底にある願いを書いてください...',
+    wish_next_btn: '共鳴を始める',
+    wish_category_career: '仕事・学業',
+    wish_category_love: '恋愛・対人',
+    wish_category_health: '心身・健康',
+    wish_category_wealth: '富・豊かさ',
+    wish_category_other: 'その他',
 
     // Energy Test Page
     test_step_1: "Step 1",
@@ -423,6 +481,8 @@ export const translations = {
     test_title_associating: "連想の言葉",
     test_title_revealed: "啓示",
     test_title_ritual: "聖なるドロー",
+    test_desc_wish_1: "意図を投影する",
+    test_desc_wish_2: "あなたの願いと目標を心に鮮明に描いてください",
     test_desc_images: "直感に従って、心に響くカードを選んでください。",
     test_desc_words: "次に、今のあなたの状態と響き合う言葉を見つけてください。",
     test_desc_pairing: "画像と言葉を一つずつ選んで、それらの間に流れるエネルギーを繋いでください。",
@@ -500,6 +560,8 @@ export const translations = {
     report_five_element: "五行エネルギー分析",
     report_reflection: "内なるリフレクション",
     report_action: "行動提案",
+    report_manifestation_guidance: "顕化の導き",
+    report_energy_obstacles: "エネルギーの障害",
     report_new_test: "新しい診断を始める",
     report_weaving: "メッセージを紡いでいます...",
     report_weaving_coffee: "あなたの魂のメッセージを紡いでいます...\nその間に、コーヒーを飲んだり、3回深呼吸をしたりしてください。\n戻ってきたときには、すべて準備が整っています。",
@@ -596,35 +658,6 @@ export const translations = {
     ocean_saved_reply_label: "あなたの共鳴ノート",
     ocean_save_limit_error: "コレクションの上限（20通）に達しました",
 
-    // Revenue & Points
-    points_low_title: "霊光エネルギーが低下しています",
-    points_low_body: "霊光がまもなく枯渇します。安定した校正のために、早めの採集をお勧めします。",
-    points_empty_title: "エネルギーが枯渇しました",
-    points_empty_body: "現在の霊光では詳細レポートを開くことができません。採集へ進んでください。",
-    points_pre_consume_hint: "この詳細レポートを開くには1ポイントの霊光を消費します。準備はよろしいですか？",
-    points_remaining: "残り霊光",
-    points_scarcity_hint: "あなたのエネルギーは残り {count} 回の探索分です",
-
-    // Progress & Achievement
-    milestone_streak_title: "共鳴が続いています",
-    milestone_streak_body: "{count} 日連続で内なる対話を行っています。その継続があなたをより強くしています。",
-    milestone_reports_title: "エネルギー地図の拡大",
-    milestone_reports_body: "{count} 件のエネルギー記録が蓄積されました。これは貴重な魂のデータとなります。",
-
-    // Re-engagement & Emotional Hooks
-    reengage_morning_title: "おはようございます、今日の周波数は？",
-    reengage_morning_body: "朝日の中で、3分間のエネルギー校正を行ってみませんか。",
-    reengage_night_title: "深夜の沈殿時間",
-    reengage_night_body: "忙しい一日を終え、カードを通じて内なる声に耳を傾けてみましょう。",
-    reengage_anxious_title: "心がざわついていませんか？",
-    reengage_anxious_body: "立ち止まって、カードのメタファーから穏やかな視点を受け取りましょう。",
-
-    // System & Growth
-    sys_error_title: "エネルギーの流れが妨げられています",
-    sys_error_body: "接続が不安定です。時間をおいてもう一度お試しください。",
-    growth_next_step_title: "次のステップの提案",
-    growth_next_step_body: "エネルギーが整ってきました。この喜びを海で分かち合ってみませんか？",
-
     // Milestone 4: Ocean Resonance
     ocean_resonance_success_title: "魂の共鳴が完了しました",
     ocean_resonance_success_desc: "あなたのエネルギーが海に響き渡りました。今のこの感覚を、内なる沈殿（日誌）に記してみませんか？",
@@ -635,6 +668,11 @@ export const translations = {
     loop_completion_title: "今日のエネルギー閉環が完了しました",
     loop_completion_desc: "校準、共鳴、そして沈殿。あなたは今日、自分自身と世界との美しい調和を成し遂げました。この穏やかなエネルギーを抱いて、良い夢を。",
     loop_completion_btn: "素晴らしい一日でした",
+    
+    // Auth Prompt
+    auth_prompt_title: "魂の旅を始める",
+    auth_prompt_desc: "エネルギーレポートを保存し、日々の成長を追蹤するために、まずは専用スペースにサインインしてください。",
+    auth_prompt_login_btn: "魂の旅を始める (Googleでサインイン)",
   }
 };
 

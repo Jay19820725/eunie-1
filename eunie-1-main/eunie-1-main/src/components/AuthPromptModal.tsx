@@ -12,7 +12,7 @@ interface AuthPromptModalProps {
 }
 
 export const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ isOpen, onClose, onSuccess }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { login, profile } = useAuth();
 
   // Watch for profile availability to auto-close and trigger success
@@ -72,11 +72,15 @@ export const AuthPromptModal: React.FC<AuthPromptModalProps> = ({ isOpen, onClos
               </div>
 
               <div className="space-y-4">
-                <h2 className="text-2xl md:text-3xl font-serif text-ink/80 tracking-wide">
-                  {t('auth_prompt_title')}
+                <h2 className="text-xl md:text-2xl font-serif text-ink/80 tracking-wide leading-relaxed">
+                  {t('auth_prompt_title') || (
+                    language === 'ja' ? '魂の周波数を同期しましょう' : '將您的靈魂頻率與系統同步'
+                  )}
                 </h2>
-                <p className="text-sm text-ink/40 leading-relaxed font-light tracking-wide">
-                  {t('auth_prompt_desc')}
+                <p className="text-xs md:text-sm text-ink/40 leading-relaxed font-light tracking-wide">
+                  {t('auth_prompt_desc') || (
+                    language === 'ja' ? 'より深い診断を行うために、ログインしてエネルギーを繋げてください。' : '為了進行更深度的測驗與解析，請先登入以連結您的能量。'
+                  )}
                 </p>
               </div>
 

@@ -12,11 +12,11 @@
       (function() {
         try {
           const originalFetch = window.fetch;
+          if (typeof originalFetch !== 'function') return;
           
           // Try to define it on the window instance directly with a getter/setter pair
           // This is more robust than a simple value property in some environments
-          let currentFetch = typeof originalFetch === 'function' ? originalFetch : undefined;
-
+          let currentFetch = originalFetch;
           Object.defineProperty(window, 'fetch', {
             get: function() { return currentFetch; },
             set: function(v) { currentFetch = v; },

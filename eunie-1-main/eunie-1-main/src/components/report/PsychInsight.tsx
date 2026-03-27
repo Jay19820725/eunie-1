@@ -36,13 +36,55 @@ export const PsychInsight: React.FC<PsychInsightProps> = ({ isAiLoading, display
               <WeavingPlaceholder label={t('report_loading_insight')} />
             ) : (
               <>
-                <p className="text-[28px] md:text-[35px] font-serif leading-[1.4] font-extralight text-ink tracking-tight mb-10">
-                  {displayContent.psychologicalInsight}
-                </p>
+                {displayContent.reportType === 'wish' && displayContent.wishContext && (
+                  <div className="mb-12 p-8 bg-ink/[0.02] border border-ink/5 rounded-[2rem] space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-1 h-4 bg-accent/40 rounded-full" />
+                      <span className="text-[10px] uppercase tracking-[0.3em] text-ink-muted">{t('wish_input_target_label')}</span>
+                      <span className="text-sm font-medium text-ink">{displayContent.wishContext.target}</span>
+                    </div>
+                    <div className="space-y-2">
+                      <span className="text-[10px] uppercase tracking-[0.3em] text-ink-muted block">{t('wish_input_content_label')}</span>
+                      <p className="text-sm leading-relaxed text-ink-muted italic">
+                        「{displayContent.wishContext.content}」
+                      </p>
+                    </div>
+                  </div>
+                )}
+                <div className="bg-gradient-to-br from-white/40 to-transparent p-6 rounded-3xl border border-white/60 mb-10 shadow-sm backdrop-blur-sm">
+                  <p className="text-[28px] md:text-[35px] font-serif leading-[1.6] font-extralight text-ink tracking-tight relative z-10">
+                    <span className="absolute -left-4 -top-4 text-6xl text-ink/5 font-serif select-none">"</span>
+                    {displayContent.psychologicalInsight}
+                  </p>
+                </div>
                 <div className="w-16 h-px bg-ink/20 mb-10" />
-                <div className="columns-1 md:columns-2 gap-10 text-[16px] text-ink-muted leading-[2] font-light tracking-wide">
+                <div className="columns-1 md:columns-2 gap-10 text-[16px] text-ink-muted leading-[2.2] font-light tracking-wide">
                   {displayContent.cardInterpretation}
                 </div>
+
+                {displayContent.reportType === 'wish' && (
+                  <div className="mt-16 space-y-16">
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-2 h-2 rounded-full bg-accent" />
+                        <h3 className="text-[15px] md:text-[10px] uppercase tracking-[0.4em] text-ink-muted">{t('report_manifestation_guidance')}</h3>
+                      </div>
+                      <p className="text-[18px] md:text-[22px] font-serif leading-[1.8] font-light text-ink">
+                        {displayContent.manifestationGuidance}
+                      </p>
+                    </div>
+
+                    <div className="space-y-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-2 h-2 rounded-full bg-ink/20" />
+                        <h3 className="text-[15px] md:text-[10px] uppercase tracking-[0.4em] text-ink-muted">{t('report_energy_obstacles')}</h3>
+                      </div>
+                      <p className="text-[16px] leading-[2] font-light text-ink-muted italic">
+                        {displayContent.energyObstacles}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>

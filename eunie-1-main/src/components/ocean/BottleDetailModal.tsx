@@ -164,9 +164,16 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
   };
 
   const modalContent = (
-    <AnimatePresence>
-      {bottle && (
-        <div className="fixed inset-0 z-[9999] flex justify-center items-start p-4 md:p-8 pt-5 md:pt-16 overflow-hidden">
+    <>
+      <AnimatePresence mode="wait">
+        {bottle && (
+          <motion.div
+            key="bottle-modal-content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[9999] flex justify-center items-start p-4 md:p-8 pt-5 md:pt-16 overflow-hidden"
+          >
           {/* Backdrop - Click to close */}
           <motion.div
             initial={{ opacity: 0 }}
@@ -289,17 +296,14 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                     {needsTranslation && (
                       <div className="pt-8 border-t border-ink/[0.02]">
                         {!translatedContent ? (
-                          <motion.button
+                          <button
                             onClick={onTranslate}
                             disabled={isTranslating}
-                            animate={{ opacity: [0.6, 1, 0.6] }}
-                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                            className="flex items-center gap-2 text-[11px] text-water hover:text-water/80 transition-colors tracking-[0.2em] uppercase font-bold relative group"
+                            className="flex items-center gap-2 text-[11px] text-ink/40 hover:text-water transition-colors tracking-[0.2em] uppercase font-medium"
                           >
-                            <div className="absolute inset-0 bg-water/10 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <Languages className={`w-4 h-4 relative z-10 ${isTranslating ? 'animate-spin' : ''}`} />
-                            <span className="relative z-10">{language === 'ja' ? '翻訳を表示' : '顯示翻譯'}</span>
-                          </motion.button>
+                            <Languages className={`w-3.5 h-3.5 ${isTranslating ? 'animate-spin' : ''}`} />
+                            {language === 'ja' ? '翻訳を表示' : '顯示翻譯'}
+                          </button>
                         ) : (
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}
@@ -366,7 +370,7 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                   <div className="flex flex-wrap gap-3">
                     {tags.slice(0, 4).map((tag, index) => (
                       <button
-                        key={`tag-${tag.id || index}-${index}`}
+                        key={`tag-detail-${tag.id}-${index}`}
                         onClick={() => onBless(tag.id)}
                         disabled={isBlessing}
                         className="group py-2.5 px-5 rounded-full border border-ink/10 text-[11px] text-ink/40 hover:bg-water hover:text-white hover:border-water transition-all flex items-center gap-2 uppercase tracking-[0.1em] font-medium"
@@ -391,12 +395,16 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
               </div>
             </div>
           </motion.div>
-        </div>
+        </motion.div>
       )}
+    </AnimatePresence>
       {/* Save Confirmation Modal (New) */}
-      <AnimatePresence>
+      <AnimatePresence mode="wait">
         {showSaveConfirm && (
-          <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <motion.div
+            key="save-confirm-modal"
+            className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
+          >
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -444,10 +452,10 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                 </button>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         )}
       </AnimatePresence>
-    </AnimatePresence>
+    </>
   );
 
   return createPortal(modalContent, document.body);

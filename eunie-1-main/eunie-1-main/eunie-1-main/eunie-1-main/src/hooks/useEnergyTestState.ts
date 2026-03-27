@@ -10,10 +10,11 @@ export const useEnergyTestState = (onComplete: () => void) => {
     setAssociations, 
     generateReport, 
     isDrawing, 
-    setSelectedCards 
+    setSelectedCards,
+    reportType
   } = useTest();
 
-  const [drawStage, setDrawStage] = useState<DrawStage>('idle');
+  const [drawStage, setDrawStage] = useState<DrawStage>(reportType === 'wish' ? 'wish_input' : 'idle');
   const [flippedImages, setFlippedImages] = useState<number[]>([]);
   const [flippedWords, setFlippedWords] = useState<number[]>([]);
   const [hasRedrawnImages, setHasRedrawnImages] = useState(false);
@@ -21,7 +22,6 @@ export const useEnergyTestState = (onComplete: () => void) => {
   const [zoomedCard, setZoomedCard] = useState<ImageCard | WordCard | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isReshuffling, setIsReshuffling] = useState(false);
-  const [isPreConsumptionModalOpen, setIsPreConsumptionModalOpen] = useState(false);
   const [loadingTime, setLoadingTime] = useState(0);
 
   // Loading timer for progressive messages
@@ -138,8 +138,6 @@ export const useEnergyTestState = (onComplete: () => void) => {
     handleRedrawAll,
     hasRedrawnWords,
     isReshuffling,
-    isPreConsumptionModalOpen,
-    setIsPreConsumptionModalOpen,
     allImagesFlipped: flippedImages.length === 3,
     allWordsFlipped: flippedWords.length === 3,
   };

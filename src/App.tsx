@@ -61,7 +61,7 @@ function AppContent() {
   const { loopStage, setLoopStage, streak, pendingReport, setPendingReport, checkPendingReports } = useUserOrchestrator();
   
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
-  const [pendingNavigate, setPendingNavigate] = useState<string | null>(null);
+  const [pendingNavigate, setPendingNavigate] = useState<{ path: string; type?: 'daily' | 'wish' } | null>(null);
 
   // Sync loopStage based on current path
   useEffect(() => {
@@ -83,25 +83,29 @@ function AppContent() {
   useEffect(() => {
     if (location.state?.showAuth) {
       setIsAuthPromptOpen(true);
-      setPendingNavigate(location.state.from?.pathname || null);
+      setPendingNavigate({ path: location.state.from?.pathname || '/' });
       // Clear state to avoid reopening on refresh
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
 
-  const handleNavigate = (path: string) => {
+  const handleNavigate = (path: string, type?: 'daily' | 'wish') => {
     const basePage = path.split('/')[0];
     if (basePage === 'test' && !profile?.uid) {
-      setPendingNavigate('test');
+      setPendingNavigate({ path: 'test', type });
       setIsAuthPromptOpen(true);
       return;
     }
+    if (type) setReportType(type);
     navigate(path === 'home' ? '/' : `/${path}`);
   };
 
   const handleAuthSuccess = () => {
     if (pendingNavigate) {
-      navigate(pendingNavigate);
+      if (pendingNavigate.type) {
+        setReportType(pendingNavigate.type);
+      }
+      navigate(pendingNavigate.path.startsWith('/') ? pendingNavigate.path : `/${pendingNavigate.path}`);
       setPendingNavigate(null);
     }
   };
@@ -126,8 +130,7 @@ function AppContent() {
               <Route path="/" element={
                 <Home 
                   onStartTest={(type) => {
-                    if (type) setReportType(type);
-                    handleNavigate('test');
+                    handleNavigate('test', type);
                   }} 
                   onNavigate={handleNavigate} 
                   loopStage={loopStage} 

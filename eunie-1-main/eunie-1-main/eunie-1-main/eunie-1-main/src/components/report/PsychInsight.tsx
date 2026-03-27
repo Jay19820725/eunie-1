@@ -6,6 +6,7 @@ import { PoeticLoading } from './PoeticLoading';
 interface PsychInsightProps {
   isAiLoading: boolean;
   displayContent: any;
+  reportType?: string;
 }
 
 const WeavingPlaceholder: React.FC<{ label: string }> = ({ label }) => (
@@ -19,7 +20,7 @@ const WeavingPlaceholder: React.FC<{ label: string }> = ({ label }) => (
   </div>
 );
 
-export const PsychInsight: React.FC<PsychInsightProps> = ({ isAiLoading, displayContent }) => {
+export const PsychInsight: React.FC<PsychInsightProps> = ({ isAiLoading, displayContent, reportType }) => {
   const { t } = useLanguage();
 
   return (
@@ -71,6 +72,32 @@ export const PsychInsight: React.FC<PsychInsightProps> = ({ isAiLoading, display
                 )}
               </div>
             </div>
+
+            {reportType === 'wish' && (
+              <>
+                <div className="bg-fire/5 p-8 md:p-10 rounded-[2.5rem] space-y-6 border border-fire/10">
+                  <span className="text-[15px] md:text-[10px] uppercase tracking-[0.4em] text-fire/60 block border-b border-fire/10 pb-3">{t('report_manifestation_guidance')}</span>
+                  {isAiLoading ? (
+                    <PoeticLoading label={t('report_weaving')} className="text-xs opacity-40" />
+                  ) : (
+                    <p className="text-sm leading-[1.8] font-light text-ink italic">
+                      {displayContent.manifestationGuidance}
+                    </p>
+                  )}
+                </div>
+
+                <div className="bg-ink/5 p-8 md:p-10 rounded-[2.5rem] space-y-6 border border-ink/10">
+                  <span className="text-[15px] md:text-[10px] uppercase tracking-[0.4em] text-ink-muted block border-b border-ink/10 pb-3">{t('report_energy_obstacles')}</span>
+                  {isAiLoading ? (
+                    <PoeticLoading label={t('report_weaving')} className="text-xs opacity-40" />
+                  ) : (
+                    <p className="text-sm leading-[1.8] font-light text-ink-muted">
+                      {displayContent.energyObstacles}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

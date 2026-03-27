@@ -1,4 +1,5 @@
-import React, { useState, Suspense, lazy, useEffect } from 'react';
+import React, { Suspense, lazy, useEffect, useState } from 'react';
+import { Routes, Route, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { Navigation } from './components/layout/Navigation';
 import { LuminaBottle } from './components/ui/LuminaBottle';
 import { PurchaseModal } from './components/PurchaseModal';
@@ -8,28 +9,24 @@ import { SEOManager } from './components/SEOManager';
 import { AnimatePresence, motion } from 'motion/react';
 import { Sparkles, X, ArrowRight } from 'lucide-react';
 import { useAuth } from './hooks/useAuth';
-import { LanguageProvider, useLanguage } from './i18n/LanguageContext';
+import { useLanguage } from './i18n/LanguageContext';
 import { SoundscapeProvider } from './store/SoundscapeContext';
-import { TestProvider, useTest } from './store/TestContext';
+import { useTest } from './store/TestContext';
 import { SoundControl } from './components/layout/SoundControl';
 import { AuthPromptModal } from './components/AuthPromptModal';
+import { useUserOrchestrator } from './hooks/useUserOrchestrator';
+import { LoopStage } from './core/types';
 
-// Lazy load pages for code splitting
+// Lazy load pages
 const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
 const EnergyTest = lazy(() => import('./pages/EnergyTest').then(m => ({ default: m.EnergyTest })));
 const EnergyReport = lazy(() => import('./pages/EnergyReport').then(m => ({ default: m.EnergyReport })));
 const UserProfile = lazy(() => import('./pages/UserProfile').then(m => ({ default: m.UserProfile })));
 const EnergyTimeline = lazy(() => import('./pages/EnergyTimeline').then(m => ({ default: m.EnergyTimeline })));
-const Manifestations = lazy(() => import('./pages/Manifestations').then(m => ({ default: m.Manifestations })));
 const Ocean = lazy(() => import('./pages/Ocean').then(m => ({ default: m.Ocean })));
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then(m => ({ default: m.AdminDashboard })));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin').then(m => ({ default: m.AdminLogin })));
 const Subscription = lazy(() => import('./pages/Subscription').then(m => ({ default: m.Subscription })));
-
-type Page = 'home' | 'test' | 'report' | 'profile' | 'history' | 'admin' | 'admin-login' | 'ocean' | 'subscription';
-
-// 每日閉環階段
-export type LoopStage = 'calibration' | 'resonance' | 'reflection' | 'completed';
 
 // Minimalist Sanctuary Loader
 const SanctuaryLoader = () => (
@@ -43,159 +40,63 @@ const SanctuaryLoader = () => (
   </div>
 );
 
-function AppContent() {
-  const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [loopStage, setLoopStage] = useState<LoopStage>('calibration');
-  const [streak, setStreak] = useState(0);
+// Auth Guard Component
+const AuthGuard = ({ children }: { children: React.ReactNode }) => {
+  const { profile, loading } = useAuth();
+  const location = useLocation();
 
+  if (loading) return <SanctuaryLoader />;
+  if (!profile?.uid) {
+    return <Navigate to="/" state={{ from: location, showAuth: true }} replace />;
+  }
+  return <>{children}</>;
+};
+
+function AppContent() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const { t } = useLanguage();
-  const { isPurchaseModalOpen, setIsPurchaseModalOpen, fetchUserPoints } = useTest();
-  const [pendingReport, setPendingReport] = useState<any>(null);
+  const { isPurchaseModalOpen, setIsPurchaseModalOpen, fetchUserPoints, setReportType } = useTest();
+  const { loopStage, setLoopStage, streak, pendingReport, setPendingReport, checkPendingReports } = useUserOrchestrator();
+  
   const [isAuthPromptOpen, setIsAuthPromptOpen] = useState(false);
-  const [pendingNavigate, setPendingNavigate] = useState<Page | null>(null);
+  const [pendingNavigate, setPendingNavigate] = useState<string | null>(null);
 
-  // Fetch daily status and streak
+  // Sync loopStage based on current path
   useEffect(() => {
-    if (profile?.uid) {
-      fetch(`/api/users/${profile.uid}/daily-status`)
-        .then(res => res.json())
-        .then(data => {
-          setStreak(data.streak || 0);
-          if (data.isCompletedToday) {
-            setLoopStage('completed');
-          } else {
-            // If not completed today, check where they are in the loop
-            const lastStage = localStorage.getItem('lastLoopStage') as LoopStage;
-            if (lastStage && lastStage !== 'completed') {
-              setLoopStage(lastStage);
-            } else {
-              setLoopStage('calibration');
-            }
-          }
-        })
-        .catch(err => console.error("Error fetching daily status:", err));
-    } else {
-      // Reset state on logout
-      setStreak(0);
-      setLoopStage('calibration');
+    const path = location.pathname;
+    if (path === '/test') setLoopStage('calibration');
+    else if (path.startsWith('/report')) setLoopStage('resonance');
+    else if (path === '/ocean') setLoopStage('reflection');
+    else if (path === '/history') setLoopStage('completed');
+  }, [location.pathname, setLoopStage]);
+
+  // Check for pending reports
+  useEffect(() => {
+    const currentPage = location.pathname.replace('/', '') || 'home';
+    const cleanup = checkPendingReports(currentPage);
+    return cleanup;
+  }, [profile?.uid, location.pathname]);
+
+  // Handle Auth Prompt from Navigate
+  useEffect(() => {
+    if (location.state?.showAuth) {
+      setIsAuthPromptOpen(true);
+      setPendingNavigate(location.state.from?.pathname || null);
+      // Clear state to avoid reopening on refresh
+      window.history.replaceState({}, document.title);
     }
-  }, [profile?.uid]);
+  }, [location.state]);
 
-  // Save loopStage to localStorage
-  useEffect(() => {
-    if (loopStage) {
-      localStorage.setItem('lastLoopStage', loopStage);
-    }
-  }, [loopStage]);
-
-  // 根據當前頁面更新閉環階段
-  useEffect(() => {
-    if (currentPage === 'test') {
-      setLoopStage('calibration');
-    } else if (currentPage === 'report') {
-      setLoopStage('resonance');
-    } else if (currentPage === 'ocean') {
-      setLoopStage('reflection');
-    } else if (currentPage === 'history' || currentPage === 'journal' || currentPage === 'manifestations') {
-      // Only set to completed if they were in reflection or already completed
-      setLoopStage('completed');
-    }
-  }, [currentPage]);
-
-  // Check for completed reports that haven't been seen
-  useEffect(() => {
-    if (profile?.uid && currentPage !== 'report') {
-      fetch(`/api/reports/${profile.uid}`)
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`Server responded with ${res.status}`);
-          }
-          const contentType = res.headers.get("content-type");
-          if (!contentType || !contentType.includes("application/json")) {
-            throw new Error("Response was not JSON");
-          }
-          return res.json();
-        })
-        .then(data => {
-          // The API returns { reports: [...], hasOtherLang: boolean, otherLangCount: number }
-          const reports = data.reports || [];
-          if (Array.isArray(reports) && reports.length > 0) {
-            const latest = reports[0];
-            const lastSeenId = localStorage.getItem('lastSeenReportId');
-            // If it's a completed report (has todayTheme) and we haven't seen it
-            if (latest.id !== lastSeenId && latest.todayTheme) {
-              setPendingReport(latest);
-              // 如果有未讀報告，且目前在首頁，可以將階段設為 resonance 提醒用戶查看
-              if (currentPage === 'home') {
-                setLoopStage('resonance');
-              }
-            }
-          }
-        })
-        .catch(err => {
-          // Only log if it's not a common "not found" or "unauthorized" error during initial load
-          if (!err.message.includes('404') && !err.message.includes('401')) {
-            console.error("Failed to fetch reports for return prompt:", err);
-          }
-        });
-    }
-  }, [profile?.uid, currentPage]);
-
-  // Simple URL-based routing
-  useEffect(() => {
-    const handleLocationChange = () => {
-      const path = window.location.pathname;
-      
-      // Handle /report/:id
-      if (path.startsWith('/report/')) {
-        setCurrentPage('report');
-        return;
-      }
-
-      const cleanPath = path.replace('/', '') || 'home';
-      
-      // Guard the test page for URL/Navigation access
-      if (cleanPath === 'test' && !profile?.uid) {
-        setPendingNavigate('test');
-        setIsAuthPromptOpen(true);
-        setCurrentPage('home');
-        window.history.replaceState(null, '', '/');
-        return;
-      }
-
-      const validPages: Page[] = ['home', 'test', 'report', 'profile', 'history', 'admin', 'admin-login', 'ocean'];
-      if (validPages.includes(cleanPath as Page)) {
-        setCurrentPage(cleanPath as Page);
-      } else {
-        setCurrentPage('home');
-      }
-    };
-
-    // Set initial page
-    handleLocationChange();
-
-    // Listen for back/forward buttons
-    window.addEventListener('popstate', handleLocationChange);
-    return () => window.removeEventListener('popstate', handleLocationChange);
-  }, [profile?.uid]);
-
-  const navigate = (page: Page | string) => {
-    const isSubPath = page.includes('/');
-    const basePage = isSubPath ? page.split('/')[0] : page;
-    
-    // Guard the test page
+  const handleNavigate = (path: string) => {
+    const basePage = path.split('/')[0];
     if (basePage === 'test' && !profile?.uid) {
       setPendingNavigate('test');
       setIsAuthPromptOpen(true);
       return;
     }
-
-    setCurrentPage(basePage as Page);
-    const path = page === 'home' ? '/' : `/${page}`;
-    if (window.location.pathname !== path) {
-      window.history.pushState(null, '', path);
-    }
+    navigate(path === 'home' ? '/' : `/${path}`);
   };
 
   const handleAuthSuccess = () => {
@@ -205,30 +106,7 @@ function AppContent() {
     }
   };
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'home':
-        return <Home onStartTest={() => navigate('test')} onNavigate={navigate} loopStage={loopStage} streak={streak} />;
-      case 'test':
-        return <EnergyTest onComplete={() => navigate('report')} />;
-      case 'report':
-        return <EnergyReport onReset={() => navigate('home')} onNavigate={navigate} loopStage={loopStage} />;
-      case 'profile':
-        return <UserProfile onNavigate={(page) => navigate(page as Page)} />;
-      case 'history':
-        return <EnergyTimeline onNavigate={(page) => navigate(page as Page)} />;
-      case 'ocean':
-        return <Ocean onNavigate={(page) => navigate(page as Page)} />;
-      case 'admin':
-        return <AdminDashboard />;
-      case 'admin-login':
-        return <AdminLogin onSuccess={() => navigate('home')} />;
-      case 'subscription':
-        return <Subscription onNavigate={(page) => navigate(page as Page)} />;
-      default:
-        return <Home onStartTest={() => navigate('test')} onNavigate={navigate} loopStage={loopStage} />;
-    }
-  };
+  const currentPath = location.pathname.replace('/', '') || 'home';
 
   return (
     <div className="relative min-h-screen selection:bg-wood/10 overflow-x-hidden">
@@ -238,30 +116,60 @@ function AppContent() {
       <Suspense fallback={<SanctuaryLoader />}>
         <AnimatePresence mode="wait">
           <motion.main
-            key={currentPage}
+            key={location.pathname}
             initial={{ opacity: 0, filter: 'blur(10px)' }}
             animate={{ opacity: 1, filter: 'blur(0px)' }}
             exit={{ opacity: 0, filter: 'blur(10px)' }}
             transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
           >
-            {renderPage()}
+            <Routes location={location}>
+              <Route path="/" element={
+                <Home 
+                  onStartTest={(type) => {
+                    if (type) setReportType(type);
+                    handleNavigate('test');
+                  }} 
+                  onNavigate={handleNavigate} 
+                  loopStage={loopStage} 
+                  streak={streak} 
+                />
+              } />
+              <Route path="/test" element={
+                <AuthGuard>
+                  <EnergyTest onComplete={() => navigate('/report')} />
+                </AuthGuard>
+              } />
+              <Route path="/report" element={<EnergyReport onReset={() => navigate('/')} onNavigate={handleNavigate} loopStage={loopStage} />} />
+              <Route path="/report/:id" element={<EnergyReport onReset={() => navigate('/')} onNavigate={handleNavigate} loopStage={loopStage} />} />
+              <Route path="/profile" element={
+                <AuthGuard>
+                  <UserProfile onNavigate={handleNavigate} />
+                </AuthGuard>
+              } />
+              <Route path="/history" element={
+                <AuthGuard>
+                  <EnergyTimeline onNavigate={handleNavigate} />
+                </AuthGuard>
+              } />
+              <Route path="/ocean" element={<Ocean onNavigate={handleNavigate} />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin-login" element={<AdminLogin onSuccess={() => navigate('/')} />} />
+              <Route path="/subscription" element={<Subscription onNavigate={handleNavigate} />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
           </motion.main>
         </AnimatePresence>
       </Suspense>
 
       <Navigation 
-        currentPath={currentPage} 
-        onNavigate={(path) => navigate(path as Page)} 
-        loopStage={loopStage}
-        onStartTest={() => navigate('test')}
+        currentPath={currentPath} 
+        onNavigate={handleNavigate} 
       />
       
       <PurchaseModal 
         isOpen={isPurchaseModalOpen} 
         onClose={() => setIsPurchaseModalOpen(false)}
-        onSuccess={() => {
-          fetchUserPoints();
-        }}
+        onSuccess={() => fetchUserPoints()}
       />
 
       <AuthPromptModal 
@@ -273,7 +181,7 @@ function AppContent() {
       <ConnectionStatus />
       <SoundControl />
 
-      {/* Return Prompt for Completed AI Analysis */}
+      {/* Return Prompt */}
       <AnimatePresence>
         {pendingReport && (
           <motion.div
@@ -309,7 +217,7 @@ function AppContent() {
                 onClick={() => {
                   localStorage.setItem('lastSeenReportId', pendingReport.id);
                   setPendingReport(null);
-                  navigate(`report/${pendingReport.id}` as any);
+                  navigate(`/report/${pendingReport.id}`);
                 }}
                 className="flex items-center justify-center gap-2 w-full h-12 bg-wood text-white rounded-2xl text-sm tracking-widest hover:bg-wood/90 transition-all active:scale-[0.98]"
               >
@@ -321,7 +229,6 @@ function AppContent() {
         )}
       </AnimatePresence>
       
-      {/* Subtle noise texture for high-end feel */}
       <div className="fixed inset-0 pointer-events-none opacity-[0.015] bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] -z-20" />
     </div>
   );

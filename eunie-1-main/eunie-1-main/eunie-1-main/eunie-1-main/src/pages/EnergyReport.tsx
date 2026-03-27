@@ -163,7 +163,7 @@ export const EnergyReport: React.FC<{
 
       <EnergyProfile report={report} />
 
-      <PsychInsight isAiLoading={isAiLoading} displayContent={displayContent} />
+      <PsychInsight isAiLoading={isAiLoading} displayContent={displayContent} reportType={report.reportType} />
 
       <CardCollage 
         report={report} 

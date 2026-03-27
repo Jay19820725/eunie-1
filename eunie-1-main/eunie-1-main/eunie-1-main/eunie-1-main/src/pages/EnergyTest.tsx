@@ -7,11 +7,11 @@ import { Sparkles, ArrowRight, Maximize2, RefreshCw } from 'lucide-react';
 import { ShuffleAnimation } from '../components/ShuffleAnimation';
 import { EunieCard } from '../components/EunieCard';
 import { CardZoomModal } from '../components/CardZoomModal';
-import { PreConsumptionModal } from '../components/PreConsumptionModal';
 import { useLanguage } from '../i18n/LanguageContext';
 import { preloadDecks } from '../services/cardEngine';
 import { PairingStage } from '../components/test/PairingStage';
 import { AssociationStage } from '../components/test/AssociationStage';
+import WishInput from '../components/test/WishInput';
 import { DynamicSubtitle } from '../components/test/DynamicSubtitle';
 import { useEnergyTestState } from '../hooks/useEnergyTestState';
 
@@ -41,6 +41,7 @@ const itemVariants = {
 
 export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete }) => {
   const { t } = useLanguage();
+  const { reportType } = useTest();
   const {
     drawStage,
     setDrawStage,
@@ -66,8 +67,6 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
     isReshuffling,
     allImagesFlipped,
     allWordsFlipped,
-    isPreConsumptionModalOpen,
-    setIsPreConsumptionModalOpen,
   } = useEnergyTestState(onComplete);
 
   useEffect(() => {
@@ -195,14 +194,18 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
           <motion.div variants={itemVariants} className="flex items-center gap-4">
             <span className="text-[10px] md:text-[12px] uppercase tracking-[0.6em] text-ink-muted">
               {drawStage === 'revealed' ? t('test_step_final') : 
-               drawStage === 'associating' ? t('test_step_4') :
-               drawStage === 'pairing' ? t('test_step_3') :
-               drawStage === 'drawing_words' ? t('test_step_2') : t('test_step_1')}
+               drawStage === 'associating' ? (reportType === 'wish' ? 'Step 5' : t('test_step_4')) :
+               drawStage === 'pairing' ? (reportType === 'wish' ? 'Step 4' : t('test_step_3')) :
+               drawStage === 'drawing_words' ? (reportType === 'wish' ? 'Step 3' : t('test_step_2')) :
+               drawStage === 'drawing_images' ? (reportType === 'wish' ? 'Step 2' : t('test_step_1')) :
+               drawStage === 'shuffling' ? (reportType === 'wish' ? 'Step 2' : t('test_step_1')) :
+               drawStage === 'wish_input' ? t('test_step_1') : t('test_step_1')}
             </span>
             <div className="h-px w-8 bg-ink/10" />
           </motion.div>
           <motion.h1 variants={itemVariants} className="text-4xl md:text-[60px] lg:text-7xl font-serif tracking-[0.05em] leading-[1.1] max-w-2xl">
-            {drawStage === 'drawing_images' ? t('test_title_images') : 
+            {drawStage === 'wish_input' ? t('wish_input_title') :
+             drawStage === 'drawing_images' ? t('test_title_images') : 
              drawStage === 'drawing_words' ? t('test_title_words') : 
              drawStage === 'pairing' ? t('test_title_pairing') :
              drawStage === 'associating' ? t('test_title_associating') :
@@ -232,7 +235,17 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
       {/* Ritual Stage */}
       <div className="relative w-full min-h-[380px] md:min-h-[900px] pb-10 md:pb-[250px] flex items-center justify-center perspective-1000 mt-0 md:mt-0">
         <AnimatePresence mode="wait">
-          {drawStage === 'shuffling' ? (
+          {drawStage === 'wish_input' ? (
+            <motion.div
+              key="wish_input"
+              initial={{ opacity: 0, x: 100 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -100 }}
+              className="w-full"
+            >
+              <WishInput />
+            </motion.div>
+          ) : drawStage === 'shuffling' ? (
             <motion.div
               key="shuffling"
               initial={{ opacity: 0 }}
@@ -486,7 +499,7 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
 
               <div className="flex flex-col items-center gap-8 pt-12">
                 <Button 
-                  onClick={() => setIsPreConsumptionModalOpen(true)}
+                  onClick={handleComplete}
                   className="h-16 px-16 gap-3 shadow-xl shadow-wood/10"
                 >
                   {t('test_revealed_view_report')} <Sparkles size={18} />
@@ -510,15 +523,6 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
       <CardZoomModal 
         card={zoomedCard} 
         onClose={() => setZoomedCard(null)} 
-      />
-
-      <PreConsumptionModal
-        isOpen={isPreConsumptionModalOpen}
-        onClose={() => setIsPreConsumptionModalOpen(false)}
-        onConfirm={() => {
-          setIsPreConsumptionModalOpen(false);
-          handleComplete();
-        }}
       />
     </div>
   );

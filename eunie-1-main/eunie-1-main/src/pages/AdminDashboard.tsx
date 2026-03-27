@@ -90,7 +90,7 @@ import {
 
 type AdminModule = 'dashboard' | 'cards' | 'users' | 'sessions' | 'subscriptions' | 'analytics' | 'prompts' | 'settings' | 'music' | 'reports' | 'ocean';
 
-export const AdminDashboard: React.FC = () => {
+const AdminDashboard: React.FC = () => {
   const [activeModule, setActiveModule] = useState<AdminModule>('dashboard');
   const queryClient = useQueryClient();
   
@@ -2553,3 +2553,5 @@ const formatDate = (timestamp: any) => {
   const date = new Date(timestamp);
   return date.toLocaleDateString('zh-TW', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
+
+export default AdminDashboard;
