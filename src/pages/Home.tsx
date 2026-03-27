@@ -309,48 +309,56 @@ export const Home: React.FC<HomeProps> = ({ onStartTest, loopStage, onNavigate, 
                 <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
                   <Wind size={48} className="text-purple-400" />
                 </div>
-                <div className="flex items-center gap-3 text-ink/30">
-                  <Wind size={16} className="text-purple-400/50" />
+                <div className="flex items-center gap-3 text-ink/40 group-hover:text-purple-500 transition-colors duration-500">
+                  <Wind size={16} />
                   <span className="text-[9px] tracking-[0.3em] uppercase font-medium">{t('home_wish_desc')}</span>
                 </div>
-                <div className="text-xl md:text-2xl font-serif font-light tracking-wide text-ink/70 text-left">
+                <div className="text-xl md:text-2xl font-serif font-light tracking-wide text-ink/70 text-left group-hover:text-ink transition-colors duration-500">
                   {t('home_wish_title')}
                 </div>
-                <div className="text-[10px] text-ink/30 font-light tracking-wider text-left max-w-[80%] leading-relaxed">
+                <div className="text-[10px] text-ink/30 font-light tracking-wider text-left max-w-[80%] leading-relaxed group-hover:text-ink/50 transition-colors duration-500">
                   {t('home_wish_subtitle')}
                 </div>
-                <div className="mt-2 flex items-center gap-2 text-[10px] tracking-[0.2em] text-ink/20 group-hover:text-ink/40 transition-colors">
+                <div className="mt-2 flex items-center gap-2 text-[10px] tracking-[0.2em] text-ink/20 group-hover:text-purple-400 transition-colors">
                   <span>{t('home_wish_action')}</span>
                   <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
                 </div>
               </button>
             </motion.div>
 
-            {/* Daily Energy Button - Elegant Glass Style */}
+            {/* Daily Energy Button - Hero Style */}
             <motion.div
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="relative group w-full md:w-1/2"
             >
-              <div className="absolute -inset-1 bg-blue-200/10 rounded-[2rem] blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              {/* Highlight Glow for Daily Energy */}
+              <motion.div
+                animate={{
+                  opacity: [0.4, 0.8, 0.4],
+                  scale: [0.95, 1.05, 0.95]
+                }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute -inset-2 bg-blue-300/20 rounded-[2rem] blur-2xl"
+              />
               <button 
                 onClick={() => handleStartTest('daily')}
-                className="relative w-full bg-white/40 backdrop-blur-xl border border-white/60 p-8 md:p-10 rounded-[2rem] flex flex-col items-start gap-4 shadow-sm hover:shadow-md transition-all duration-700"
+                className="relative w-full bg-white/60 backdrop-blur-2xl border-2 border-white/80 p-8 md:p-10 rounded-[2rem] flex flex-col items-start gap-4 shadow-lg hover:shadow-xl hover:bg-white/80 transition-all duration-700 overflow-hidden"
               >
-                <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition-opacity">
-                  <Activity size={48} className="text-blue-400" />
+                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                  <Activity size={48} className="text-blue-500" />
                 </div>
-                <div className="flex items-center gap-3 text-ink/30">
-                  <Activity size={16} className="text-blue-400/50" />
-                  <span className="text-[9px] tracking-[0.3em] uppercase font-medium">{t('home_energy_desc')}</span>
+                <div className="flex items-center gap-3 text-blue-500">
+                  <Activity size={16} />
+                  <span className="text-[9px] tracking-[0.3em] uppercase font-bold">{t('home_energy_desc')}</span>
                 </div>
-                <div className="text-xl md:text-2xl font-serif font-light tracking-wide text-ink/70 text-left">
+                <div className="text-xl md:text-2xl font-serif font-medium tracking-wide text-ink text-left">
                   {t('home_energy_title')}
                 </div>
-                <div className="text-[10px] text-ink/30 font-light tracking-wider text-left max-w-[80%] leading-relaxed">
+                <div className="text-[10px] text-ink/50 font-light tracking-wider text-left max-w-[80%] leading-relaxed">
                   {t('home_energy_subtitle')}
                 </div>
-                <div className="mt-2 flex items-center gap-2 text-[10px] tracking-[0.2em] text-ink/20 group-hover:text-ink/40 transition-colors">
+                <div className="mt-2 flex items-center gap-2 text-[10px] tracking-[0.2em] text-blue-500 group-hover:text-blue-600 transition-colors font-medium">
                   <span>{t('home_energy_action')}</span>
                   <ArrowRight size={12} className="group-hover:translate-x-1 transition-transform" />
                 </div>

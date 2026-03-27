@@ -289,14 +289,17 @@ export const BottleDetailModal: React.FC<BottleDetailModalProps> = ({
                     {needsTranslation && (
                       <div className="pt-8 border-t border-ink/[0.02]">
                         {!translatedContent ? (
-                          <button
+                          <motion.button
                             onClick={onTranslate}
                             disabled={isTranslating}
-                            className="flex items-center gap-2 text-[11px] text-ink/40 hover:text-water transition-colors tracking-[0.2em] uppercase font-medium"
+                            animate={{ opacity: [0.6, 1, 0.6] }}
+                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                            className="flex items-center gap-2 text-[11px] text-water hover:text-water/80 transition-colors tracking-[0.2em] uppercase font-bold relative group"
                           >
-                            <Languages className={`w-3.5 h-3.5 ${isTranslating ? 'animate-spin' : ''}`} />
-                            {language === 'ja' ? '翻訳を表示' : '顯示翻譯'}
-                          </button>
+                            <div className="absolute inset-0 bg-water/10 rounded-full blur-md opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <Languages className={`w-4 h-4 relative z-10 ${isTranslating ? 'animate-spin' : ''}`} />
+                            <span className="relative z-10">{language === 'ja' ? '翻訳を表示' : '顯示翻譯'}</span>
+                          </motion.button>
                         ) : (
                           <motion.div
                             initial={{ opacity: 0, y: 10 }}

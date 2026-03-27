@@ -282,6 +282,12 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
                     y: -i * 3,
                     rotate: i * 0.8,
                   }}
+                  whileHover={{
+                    y: -i * 5 - 10,
+                    rotate: i * 1.5 - 2,
+                    scale: 1.05,
+                    transition: { duration: 0.4, ease: "easeOut" }
+                  }}
                   className="absolute inset-0 bg-white/40 backdrop-blur-3xl border border-white/30 rounded-[3rem] shadow-2xl shadow-ink/5"
                   style={{ zIndex: 5 - i }}
                 >
@@ -322,29 +328,25 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
                 ))}
               </motion.div>
               
-              {allImagesFlipped && !isReshuffling && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none"
-                >
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="pointer-events-auto w-full max-w-xs md:max-w-md flex flex-col items-center gap-6"
+              <AnimatePresence>
+                {allImagesFlipped && !isReshuffling && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0, y: 20 }}
+                    animate={{ opacity: 1, height: 'auto', y: 0 }}
+                    exit={{ opacity: 0, height: 0, y: -20 }}
+                    className="w-full flex justify-center mt-4"
                   >
                     <Button 
                       variant="secondary"
                       onClick={handleContinueToWords} 
-                      className="group bg-white/90 backdrop-blur-3xl border-white/80 text-ink hover:bg-white h-16 md:h-24 px-8 md:px-16 text-lg md:text-xl rounded-2xl md:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] w-full"
+                      className="group bg-white/90 backdrop-blur-3xl border-white/80 text-ink hover:bg-white h-16 md:h-20 px-8 md:px-16 text-lg rounded-2xl md:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] w-full max-w-xs md:max-w-md"
                     >
                       {t('test_continue_words')}
                       <ArrowRight className="ml-2 md:ml-4 group-hover:translate-x-1 transition-transform" size={20} />
                     </Button>
                   </motion.div>
-                </motion.div>
-              )}
+                )}
+              </AnimatePresence>
             </motion.div>
           ) : drawStage === 'drawing_words' ? (
             <motion.div 
@@ -370,22 +372,18 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
                 ))}
               </motion.div>
               
-              {allWordsFlipped && !isReshuffling && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[60] flex items-center justify-center p-6 pointer-events-none"
-                >
-                  <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="pointer-events-auto w-full max-w-xs md:max-w-md flex flex-col items-center gap-6"
+              <AnimatePresence>
+                {allWordsFlipped && !isReshuffling && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0, y: 20 }}
+                    animate={{ opacity: 1, height: 'auto', y: 0 }}
+                    exit={{ opacity: 0, height: 0, y: -20 }}
+                    className="w-full flex flex-col items-center gap-4 mt-4"
                   >
                     <Button 
                       variant="secondary"
                       onClick={handleContinueToPairing} 
-                      className="group bg-white/90 backdrop-blur-3xl border-white/80 text-ink hover:bg-white h-16 md:h-24 px-8 md:px-16 text-lg md:text-xl rounded-2xl md:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.2)] w-full"
+                      className="group bg-white/90 backdrop-blur-3xl border-white/80 text-ink hover:bg-white h-16 md:h-20 px-8 md:px-16 text-lg rounded-2xl md:rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.15)] w-full max-w-xs md:max-w-md"
                     >
                       {t('test_continue_pairing')}
                       <ArrowRight className="ml-2 md:ml-4 group-hover:translate-x-1 transition-transform" size={20} />
@@ -395,15 +393,15 @@ export const EnergyTest: React.FC<{ onComplete: () => void }> = ({ onComplete })
                       <Button
                         variant="outline"
                         onClick={handleRedrawAll}
-                        className="h-12 px-8 bg-white/60 backdrop-blur-xl border-white/50 text-ink hover:text-ink hover:border-white/80 rounded-xl shadow-xl"
+                        className="h-12 px-8 bg-white/60 backdrop-blur-xl border-white/50 text-ink hover:text-ink hover:border-white/80 rounded-xl shadow-sm"
                       >
                         <RefreshCw size={14} className="mr-2" />
                         {t('test_draw_again')}
                       </Button>
                     )}
                   </motion.div>
-                </motion.div>
-              )}
+                )}
+              </AnimatePresence>
             </motion.div>
           ) : drawStage === 'pairing' ? (
             <motion.div

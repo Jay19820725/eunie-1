@@ -58,10 +58,17 @@ export const Ocean: React.FC<{ onNavigate?: (page: string) => void }> = ({ onNav
         hasInteractedRef.current = true;
         setIsAmbientPlaying(true);
       }
+      // Remove all interaction listeners once triggered
       window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
     };
     window.addEventListener('click', handleFirstInteraction, { once: true });
-    return () => window.removeEventListener('click', handleFirstInteraction);
+    window.addEventListener('touchstart', handleFirstInteraction, { once: true });
+
+    return () => {
+      window.removeEventListener('click', handleFirstInteraction);
+      window.removeEventListener('touchstart', handleFirstInteraction);
+    };
   }, []);
 
   useEffect(() => {

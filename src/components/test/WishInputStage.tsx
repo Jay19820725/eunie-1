@@ -17,10 +17,18 @@ const categories = [
 ];
 
 export const WishInputStage: React.FC<WishInputStageProps> = ({ onSubmit }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [category, setCategory] = useState('career');
   const [target, setTarget] = useState('');
   const [content, setContent] = useState('');
+
+  const placeholders = {
+    career: language === 'ja' ? '例：下半期のキャリアの方向性について...' : '例如：下半年的職涯發展方向...',
+    love: language === 'ja' ? '例：現在のパートナーとの関係について...' : '例如：目前與伴侶的關係發展...',
+    health: language === 'ja' ? '例：最近の心身の疲労回復について...' : '例如：最近身心疲勞的恢復建議...',
+    wealth: language === 'ja' ? '例：新しい投資計画について...' : '例如：新的投資計畫發展...',
+    other: language === 'ja' ? '例：今、心の中にあるもやもや...' : '例如：目前心中的煩惱與擔憂...'
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,8 +105,8 @@ export const WishInputStage: React.FC<WishInputStageProps> = ({ onSubmit }) => {
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder={t('wish_input_content_placeholder')}
-            className="w-full bg-white/40 backdrop-blur-md border border-white/60 rounded-2xl px-6 py-4 text-sm text-ink/70 placeholder:text-ink/20 focus:outline-none focus:border-ink/20 transition-all min-h-[120px] resize-none"
+            placeholder={placeholders[category as keyof typeof placeholders] || t('wish_input_content_placeholder')}
+            className="w-full bg-white/40 backdrop-blur-md border border-white/60 rounded-2xl px-6 py-4 text-sm text-ink/70 placeholder:text-ink/30 focus:outline-none focus:border-purple-300 transition-all min-h-[120px] resize-none shadow-inner"
             required
           />
         </div>
