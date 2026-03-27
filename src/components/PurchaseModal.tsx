@@ -5,6 +5,19 @@ import { Button } from './ui/Button';
 import { useLanguage } from '../i18n/LanguageContext';
 import { auth } from '../lib/firebase';
 
+type PlanId = 'subscription' | 'points_pack' | 'trial_point';
+
+interface Plan {
+  id: PlanId;
+  name: string;
+  points: number;
+  price: number;
+  currency: 'JPY' | 'TWD';
+  description: string;
+  tag: string | null;
+  show: boolean;
+}
+
 interface PurchaseModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -14,7 +27,7 @@ interface PurchaseModalProps {
 export const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { t, language } = useLanguage();
   const [step, setStep] = useState<'selection' | 'payment'>('selection');
-  const [selectedPlan, setSelectedPlan] = useState<'subscription' | 'points_pack' | 'trial_point' | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<PlanId | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isFirstPurchase, setIsFirstPurchase] = useState(true);
 
@@ -29,7 +42,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, o
     }
   }, [isOpen]);
 
-  const plans = [
+  const plans: Plan[] = [
     {
       id: 'trial_point',
       name: language === 'ja' ? '体験プラン' : '體驗方案',
@@ -62,7 +75,7 @@ export const PurchaseModal: React.FC<PurchaseModalProps> = ({ isOpen, onClose, o
     }
   ];
 
-  const handleSelectPlan = (planId: any) => {
+  const handleSelectPlan = (planId: PlanId) => {
     setSelectedPlan(planId);
     setStep('payment');
   };
